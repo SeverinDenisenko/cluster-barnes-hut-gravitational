@@ -71,12 +71,14 @@ private:
         }
     };
 
-    using node_id_t                         = std::uint32_t;
-    static constexpr node_id_t null_node_id = node_id_t(0);
+    using node_id_t                               = std::uint32_t;
+    static constexpr node_id_t root_node_id       = node_id_t(0);
+    static constexpr node_id_t null_child_node_id = node_id_t(root_node_id);
 
     struct node_t {
         axis_aligned_bounding_box box;
-        node_id_t children[2][2] { { null_node_id, null_node_id }, { null_node_id, null_node_id } };
+        node_id_t children[2][2] { { null_child_node_id, null_child_node_id },
+                                   { null_child_node_id, null_child_node_id } };
     };
 
     void iterate_node_points(node_id_t id, std::function<void(vec2)> do_something)
@@ -93,8 +95,9 @@ private:
         point_iterator end,
         u32 depth_limit)
     {
-        if (begin == end)
-            return null_node_id;
+        if (begin == end) {
+            return null_child_node_id;
+        }
 
         node_id_t current_id = tree.nodes_.size();
         tree.nodes_.emplace_back();

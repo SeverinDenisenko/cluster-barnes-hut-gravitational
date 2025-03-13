@@ -33,6 +33,15 @@ TEST(QuadTreeTest, ConstructTest)
     EXPECT_EQ(tree.node_count(), 4 + 1);
 }
 
+TEST(QuadTreeTest, DuplicateTest)
+{
+    std::vector<vec2> data = { vec2 { -1.0, -1.0 }, vec2 { -1.0, -1.0 }, vec2 { 1.0, 1.0 }, vec2 { 1.0, 1.0 } };
+
+    quadtree tree = quadtree::build(std::move(data));
+
+    EXPECT_EQ(tree.node_count(), 2 + 1);
+}
+
 }
 
 int main(int argc, char** argv)
