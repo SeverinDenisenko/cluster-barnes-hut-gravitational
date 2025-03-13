@@ -4,7 +4,7 @@ using namespace bh;
 
 int main()
 {
-    infra::setup_logging();
+    setup_logging();
 
     LOG_INFO("Starting cluster application...");
     return 0;

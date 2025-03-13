@@ -1,6 +1,6 @@
 #include "logging.hpp"
 
-namespace bh::infra {
+namespace bh {
 
 void setup_logging()
 {

@@ -6,7 +6,7 @@
 #define LOG_DEBUG SPDLOG_DEBUG
 #define LOG_TRACE SPDLOG_TRACE
 
-namespace bh::infra {
+namespace bh {
 
 void setup_logging();
 
