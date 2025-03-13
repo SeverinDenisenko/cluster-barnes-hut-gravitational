@@ -34,6 +34,39 @@ public:
         return nodes_.size();
     }
 
+    void walk(std::function<void(u32, u32)> reduce_leafs)
+    {
+        for (node_id_t id = 0; id < nodes_.size(); ++id) {
+            node_id_t node = nodes_.size() - 1 - id;
+
+            if (!nodes_[node].is_leaf()) {
+                continue;
+            }
+
+            for (u32 i = node_points_begin_[node]; i < node_points_begin_[node + 1]; ++i) {
+                reduce_leafs(node, i);
+            }
+        }
+    }
+
+    void walk(std::function<void(u32, u32, u32, u32, u32)> reduce_nodes)
+    {
+        for (node_id_t id = 0; id < nodes_.size(); ++id) {
+            node_id_t node = nodes_.size() - 1 - id;
+
+            if (nodes_[node].is_leaf()) {
+                continue;
+            }
+
+            reduce_nodes(
+                node,
+                nodes_[node].children[0][0],
+                nodes_[node].children[0][1],
+                nodes_[node].children[1][0],
+                nodes_[node].children[1][1]);
+        }
+    }
+
 private:
     quadtree(point_container& points)
         : points_(points)
@@ -75,6 +108,12 @@ private:
         axis_aligned_bounding_box box;
         node_id_t children[2][2] { { null_child_node_id, null_child_node_id },
                                    { null_child_node_id, null_child_node_id } };
+
+        bool is_leaf()
+        {
+            return children[0][0] == null_child_node_id && children[0][1] == null_child_node_id
+                && children[1][0] == null_child_node_id && children[1][1] == null_child_node_id;
+        }
     };
 
     void iterate_node_points(node_id_t id, std::function<void(vec2)> do_something)
