@@ -207,6 +207,22 @@ public:
         return vector::div(a, b);
     }
 
+    static vector min(vector a, vector b) noexcept
+    {
+        for (size_t i = 0; i < Len; ++i) {
+            a[i] = std::min(a[i], b[i]);
+        }
+        return a;
+    }
+
+    static vector max(vector a, vector b) noexcept
+    {
+        for (size_t i = 0; i < Len; ++i) {
+            a[i] = std::max(a[i], b[i]);
+        }
+        return a;
+    }
+
 private:
     std::array<Val, Len> data_;
 };

@@ -6,11 +6,31 @@
 
 namespace bh {
 
+TEST(QuadTreeTest, EmptyTest)
+{
+    std::vector<vec2> data = {};
+
+    quadtree tree = quadtree::build(std::move(data));
+
+    EXPECT_EQ(tree.node_count(), 0);
+}
+
+TEST(QuadTreeTest, SingularTest)
+{
+    std::vector<vec2> data = { vec2 { -1.0, -1.0 } };
+
+    quadtree tree = quadtree::build(std::move(data));
+
+    EXPECT_EQ(tree.node_count(), 1);
+}
+
 TEST(QuadTreeTest, ConstructTest)
 {
-    std::vector<vec2> data = { vec2 { -1.0, 1.0 }, vec2 { 2.0, 1.0 }, vec2 { 3.0, 1.0 }, vec2 { 2.0, 4.0 } };
+    std::vector<vec2> data = { vec2 { -1.0, -1.0 }, vec2 { -1.0, 1.0 }, vec2 { 1.0, -1.0 }, vec2 { 1.0, 1.0 } };
 
-    quadtree tree = quadtree::build(data);
+    quadtree tree = quadtree::build(std::move(data));
+
+    EXPECT_EQ(tree.node_count(), 4 + 1);
 }
 
 }
