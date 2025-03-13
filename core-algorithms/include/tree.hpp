@@ -1,9 +1,6 @@
 #pragma once
 
-#include <algorithm>
-#include <cassert>
 #include <functional>
-#include <iterator>
 #include <vector>
 
 #include "linalg.hpp"

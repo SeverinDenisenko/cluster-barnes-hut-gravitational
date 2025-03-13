@@ -1,5 +1,9 @@
 #include "tree.hpp"
 
+#include <algorithm>
+#include <cassert>
+#include <iterator>
+
 namespace bh {
 
 quadtree quadtree::build(point_container& points)
