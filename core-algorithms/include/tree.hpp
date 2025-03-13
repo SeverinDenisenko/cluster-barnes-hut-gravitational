@@ -11,6 +11,8 @@
 
 namespace bh {
 
+// Barnes-Hut tree does not own points or other data, it's only contains structure of the tree
+
 class quadtree {
 public:
     template <typename T>
@@ -23,18 +25,19 @@ public:
 
     static constexpr u32 max_tree_depth = 100;
 
-    static quadtree build(point_container points)
+    static quadtree build(point_container& points)
     {
-        quadtree tree;
+        quadtree tree(points);
 
-        tree.points_ = std::move(points);
-        axis_aligned_bounding_box whole_aabb
-            = axis_aligned_bounding_box::create(tree.points_.begin(), tree.points_.end());
-        node_id_t root_node_id = build_impl(tree, whole_aabb, tree.points_.begin(), tree.points_.end(), max_tree_depth);
-        assert(root_node_id == 0);
-        tree.node_points_begin_.push_back(tree.points_.size());
+        tree.build_tree();
 
         return tree;
+    }
+
+    static void rebuild(quadtree& tree)
+    {
+        tree.destroy_tree();
+        tree.build_tree();
     }
 
     quadtree(const quadtree&) = delete;
@@ -46,7 +49,24 @@ public:
     }
 
 private:
-    quadtree() = default;
+    quadtree(point_container& points)
+        : points_(points)
+    {
+    }
+
+    void destroy_tree()
+    {
+        nodes_.clear();
+        node_points_begin_.clear();
+    }
+
+    void build_tree()
+    {
+        axis_aligned_bounding_box whole_aabb = axis_aligned_bounding_box::create(points_.begin(), points_.end());
+        node_id_t root_node_id               = build_impl(whole_aabb, points_.begin(), points_.end(), max_tree_depth);
+        assert(root_node_id == 0);
+        node_points_begin_.push_back(points_.size());
+    }
 
     struct axis_aligned_bounding_box {
         static constexpr real inf = std::numeric_limits<vec2::data_t>::infinity();
@@ -88,22 +108,18 @@ private:
         }
     }
 
-    static node_id_t build_impl(
-        quadtree& tree,
-        axis_aligned_bounding_box const& bbox,
-        point_iterator begin,
-        point_iterator end,
-        u32 depth_limit)
+    node_id_t
+    build_impl(axis_aligned_bounding_box const& bbox, point_iterator begin, point_iterator end, u32 depth_limit)
     {
         if (begin == end) {
             return null_child_node_id;
         }
 
-        node_id_t current_id = tree.nodes_.size();
-        tree.nodes_.emplace_back();
+        node_id_t current_id = nodes_.size();
+        nodes_.emplace_back();
 
-        tree.node_points_begin_.emplace_back();
-        tree.node_points_begin_[current_id] = std::distance(tree.points_.begin(), begin);
+        node_points_begin_.emplace_back();
+        node_points_begin_[current_id] = std::distance(points_.begin(), begin);
 
         if (depth_limit == 0) {
             return current_id;
@@ -126,22 +142,22 @@ private:
         std::vector<vec2>::iterator split_x_lower = std::partition(begin, split_y, left);
         std::vector<vec2>::iterator split_x_upper = std::partition(split_y, end, left);
 
-        axis_aligned_bounding_box box_0_0      = { bbox.min, center };
-        tree.nodes_[current_id].children[0][0] = build_impl(tree, box_0_0, begin, split_x_lower, depth_limit - 1);
+        axis_aligned_bounding_box box_0_0 = { bbox.min, center };
+        nodes_[current_id].children[0][0] = build_impl(box_0_0, begin, split_x_lower, depth_limit - 1);
 
-        axis_aligned_bounding_box box_0_1      = { vec2 { center[0], bbox.min[1] }, vec2 { bbox.max[0], center[1] } };
-        tree.nodes_[current_id].children[0][1] = build_impl(tree, box_0_1, split_x_lower, split_y, depth_limit - 1);
+        axis_aligned_bounding_box box_0_1 = { vec2 { center[0], bbox.min[1] }, vec2 { bbox.max[0], center[1] } };
+        nodes_[current_id].children[0][1] = build_impl(box_0_1, split_x_lower, split_y, depth_limit - 1);
 
-        axis_aligned_bounding_box box_1_0      = { vec2 { bbox.min[0], center[1] }, vec2 { center[0], bbox.max[1] } };
-        tree.nodes_[current_id].children[1][0] = build_impl(tree, box_1_0, split_y, split_x_upper, depth_limit - 1);
+        axis_aligned_bounding_box box_1_0 = { vec2 { bbox.min[0], center[1] }, vec2 { center[0], bbox.max[1] } };
+        nodes_[current_id].children[1][0] = build_impl(box_1_0, split_y, split_x_upper, depth_limit - 1);
 
-        axis_aligned_bounding_box box_1_1      = { center, bbox.max };
-        tree.nodes_[current_id].children[1][1] = build_impl(tree, box_1_1, split_x_upper, end, depth_limit - 1);
+        axis_aligned_bounding_box box_1_1 = { center, bbox.max };
+        nodes_[current_id].children[1][1] = build_impl(box_1_1, split_x_upper, end, depth_limit - 1);
 
         return current_id;
     }
 
-    point_container points_;
+    point_container& points_;
     internal_container<node_t> nodes_;
     internal_container<u32> node_points_begin_;
 };
