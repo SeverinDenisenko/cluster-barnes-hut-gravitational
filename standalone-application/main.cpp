@@ -25,28 +25,29 @@ int main()
 
     // Compute node masses
 
-    tree.walk([&node_mass, &mass](u32 node, u32 point) { node_mass[node] += mass[point]; });
+    tree.walk_leafs([&node_mass, &mass](u32 node, u32 point) { node_mass[node] += mass[point]; });
 
-    tree.walk([&node_mass](u32 parent, u32 child_a, u32 child_b, u32 child_c, u32 child_d) {
-        node_mass[parent] = node_mass[child_a] + node_mass[child_b] + node_mass[child_c] + node_mass[child_d];
-    });
+    tree.walk_nodes([&node_mass](u32 parent, u32 child) { node_mass[parent] += node_mass[child]; });
 
     // Compute node mass centers
 
-    tree.walk([&node_mass_center, &mass, &pos](u32 node, u32 point) {
+    tree.walk_leafs([&node_mass_center, &mass, &pos](u32 node, u32 point) {
         node_mass_center[node] = pos[point] * mass[point] + node_mass_center[node];
     });
 
-    tree.walk([&node_mass_center, &node_mass](u32 node, [[maybe_unused]] u32 point) {
+    tree.walk_leafs([&node_mass_center, &node_mass](u32 node, [[maybe_unused]] u32 point) {
         node_mass_center[node] = node_mass_center[node] / node_mass[node];
     });
 
-    tree.walk([&node_mass_center, &node_mass](u32 parent, u32 child_a, u32 child_b, u32 child_c, u32 child_d) {
-        node_mass_center[parent] = node_mass_center[child_a] * node_mass[child_a]
-            + node_mass_center[child_b] * node_mass[child_b] + node_mass_center[child_c] * node_mass[child_c]
-            + node_mass_center[child_d] * node_mass[child_d];
+    tree.walk_nodes([&node_mass_center, &node_mass](u32 parent, u32 child) {
+        node_mass_center[parent] = node_mass_center[child] * node_mass[child] + node_mass_center[parent];
+    });
+
+    tree.walk_nodes([&node_mass_center, &node_mass](u32 parent, [[maybe_unused]] u32 child) {
         node_mass_center[parent] = node_mass_center[parent] / node_mass[parent];
     });
+
+    // Make iteration
 
     return 0;
 }

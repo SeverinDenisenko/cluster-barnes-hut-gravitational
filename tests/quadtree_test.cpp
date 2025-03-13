@@ -92,7 +92,7 @@ TEST(QuadTreeTest, WalkLeafTest)
 
     u8 sum = 0;
 
-    tree.walk([&sum, &external_data]([[maybe_unused]] u8 node, u8 point) { sum += external_data[point]; });
+    tree.walk_leafs([&sum, &external_data]([[maybe_unused]] u8 node, u8 point) { sum += external_data[point]; });
 
     EXPECT_EQ(sum, 10);
 }
@@ -108,11 +108,9 @@ TEST(QuadTreeTest, WalkNodesTest)
 
     std::vector<u8> nodes_data(tree.node_count());
 
-    tree.walk([&nodes_data, &external_data](u8 node, u8 point) { nodes_data[node] += external_data[point]; });
+    tree.walk_leafs([&nodes_data, &external_data](u8 node, u8 point) { nodes_data[node] += external_data[point]; });
 
-    tree.walk([&nodes_data](u8 node, u8 child_a, u8 child_b, u8 child_c, u8 child_d) {
-        nodes_data[node] = nodes_data[child_a] + nodes_data[child_b] + nodes_data[child_c] + nodes_data[child_d];
-    });
+    tree.walk_nodes([&nodes_data](u8 node, u8 child) { nodes_data[node] += nodes_data[child]; });
 
     EXPECT_EQ(nodes_data[0], 4);
     EXPECT_EQ(nodes_data[1], 1);
@@ -132,11 +130,9 @@ TEST(QuadTreeTest, WalkNodesTestBalance)
 
     std::vector<u8> nodes_data(tree.node_count());
 
-    tree.walk([&nodes_data, &external_data](u8 node, u8 point) { nodes_data[node] += external_data[point]; });
+    tree.walk_leafs([&nodes_data, &external_data](u8 node, u8 point) { nodes_data[node] += external_data[point]; });
 
-    tree.walk([&nodes_data](u8 node, u8 child_a, u8 child_b, u8 child_c, u8 child_d) {
-        nodes_data[node] = nodes_data[child_a] + nodes_data[child_b] + nodes_data[child_c] + nodes_data[child_d];
-    });
+    tree.walk_nodes([&nodes_data](u8 node, u8 child) { nodes_data[node] += nodes_data[child]; });
 
     EXPECT_EQ(nodes_data[0], 4);
     EXPECT_EQ(nodes_data[1], 2);

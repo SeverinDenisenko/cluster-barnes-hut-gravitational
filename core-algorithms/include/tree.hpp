@@ -34,7 +34,7 @@ public:
         return nodes_.size();
     }
 
-    void walk(std::function<void(u32, u32)> reduce_leafs)
+    void walk_leafs(std::function<void(u32, u32)> reduce_leafs)
     {
         for (node_id_t id = 0; id < nodes_.size(); ++id) {
             node_id_t node = nodes_.size() - 1 - id;
@@ -49,7 +49,7 @@ public:
         }
     }
 
-    void walk(std::function<void(u32, u32, u32, u32, u32)> reduce_nodes)
+    void walk_nodes(std::function<void(u32, u32)> reduce_node)
     {
         for (node_id_t id = 0; id < nodes_.size(); ++id) {
             node_id_t node = nodes_.size() - 1 - id;
@@ -58,12 +58,14 @@ public:
                 continue;
             }
 
-            reduce_nodes(
-                node,
-                nodes_[node].children[0][0],
-                nodes_[node].children[0][1],
-                nodes_[node].children[1][0],
-                nodes_[node].children[1][1]);
+            for (u32 i = 0; i < 2; ++i) {
+                for (u32 j = 0; j < 2; ++j) {
+                    if (nodes_[node].children[i][j] == null_child_node_id) {
+                        continue;
+                    }
+                    reduce_node(node, nodes_[node].children[i][j]);
+                }
+            }
         }
     }
 
@@ -115,13 +117,6 @@ private:
                 && children[1][0] == null_child_node_id && children[1][1] == null_child_node_id;
         }
     };
-
-    void iterate_node_points(node_id_t id, std::function<void(vec2)> do_something)
-    {
-        for (auto i = node_points_begin_[id]; i < node_points_begin_[id + 1]; ++i) {
-            do_something(points_[i]);
-        }
-    }
 
     node_id_t
     build_impl(axis_aligned_bounding_box const& bbox, point_iterator begin, point_iterator end, u32 depth_limit);
