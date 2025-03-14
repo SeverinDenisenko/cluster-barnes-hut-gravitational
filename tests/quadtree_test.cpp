@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -137,6 +138,45 @@ TEST(QuadTreeTest, WalkNodesTestBalance)
     EXPECT_EQ(nodes_data[0], 4);
     EXPECT_EQ(nodes_data[1], 2);
     EXPECT_EQ(nodes_data[2], 2);
+}
+
+TEST(QuadTreeTest, ReduceTest)
+{
+    std::vector<vec2> data        = { vec2 { -1.0, -1.0 }, vec2 { -1.0, 1.0 }, vec2 { 1.0, -1.0 }, vec2 { 1.0, 1.0 } };
+    std::vector<u8> external_data = { 1, 1, 1, 1 };
+
+    quadtree tree = quadtree::build(data);
+
+    EXPECT_EQ(tree.node_count(), 4 + 1);
+
+    std::vector<u8> nodes_data(tree.node_count());
+
+    tree.walk_leafs([&nodes_data, &external_data](u8 node, u8 point) { nodes_data[node] += external_data[point]; });
+
+    tree.walk_nodes([&nodes_data](u8 node, u8 child) { nodes_data[node] += nodes_data[child]; });
+
+    u32 points_sum   = 0;
+    u32 nodes_sum    = 0;
+    u32 combined_sum = 0;
+
+    tree.reduce(
+        []([[maybe_unused]] u32 node) { return; },
+        [&points_sum, &external_data](u32 point) { points_sum += external_data[point]; },
+        []([[maybe_unused]] quadtree::axis_aligned_bounding_box aabb) -> bool { return false; });
+
+    tree.reduce(
+        [&nodes_sum, &nodes_data](u32 node) { nodes_sum += nodes_data[node]; },
+        []([[maybe_unused]] u32 point) { return; },
+        []([[maybe_unused]] quadtree::axis_aligned_bounding_box aabb) -> bool { return true; });
+
+    tree.reduce(
+        [&combined_sum, &nodes_data](u32 node) { combined_sum += nodes_data[node]; },
+        [&combined_sum, &external_data](u32 point) { combined_sum += external_data[point]; },
+        []([[maybe_unused]] quadtree::axis_aligned_bounding_box aabb) -> bool { return rand() % 2; });
+
+    EXPECT_EQ(nodes_sum, 4);
+    EXPECT_EQ(points_sum, 4);
+    EXPECT_EQ(combined_sum, 4);
 }
 
 }

@@ -84,4 +84,95 @@ quadtree::build_impl(axis_aligned_bounding_box const& bbox, point_iterator begin
     return current_id;
 }
 
+void quadtree::walk_leafs(std::function<void(u32 node_id, u32 point_id)> reduce_leafs)
+{
+    for (node_id_t id = 0; id < nodes_.size(); ++id) {
+        node_id_t node = nodes_.size() - 1 - id;
+
+        if (!nodes_[node].is_leaf()) {
+            continue;
+        }
+
+        for (u32 i = node_points_begin_[node]; i < node_points_begin_[node + 1]; ++i) {
+            reduce_leafs(node, i);
+        }
+    }
+}
+
+void quadtree::walk_nodes(std::function<void(u32 node_id, u32 child_id)> reduce_node)
+{
+    for (node_id_t id = 0; id < nodes_.size(); ++id) {
+        node_id_t node = nodes_.size() - 1 - id;
+
+        if (nodes_[node].is_leaf()) {
+            continue;
+        }
+
+        for (u32 i = 0; i < 2; ++i) {
+            for (u32 j = 0; j < 2; ++j) {
+                if (nodes_[node].children[i][j] == null_child_node_id) {
+                    continue;
+                }
+                reduce_node(node, nodes_[node].children[i][j]);
+            }
+        }
+    }
+}
+
+quadtree::axis_aligned_bounding_box& quadtree::axis_aligned_bounding_box::operator|=(vec2 const& p)
+{
+    min = vec2::min(min, p);
+    max = vec2::max(max, p);
+    return *this;
+}
+
+quadtree::axis_aligned_bounding_box
+quadtree::axis_aligned_bounding_box::create(point_iterator begin, point_iterator end)
+{
+    axis_aligned_bounding_box result;
+    for (auto it = begin; it != end; ++it)
+        result |= *it;
+    return result;
+}
+
+bool quadtree::node_t::is_leaf()
+{
+    return children[0][0] == null_child_node_id && children[0][1] == null_child_node_id
+        && children[1][0] == null_child_node_id && children[1][1] == null_child_node_id;
+}
+
+void quadtree::reduce(
+    std::function<void(u32 node_id)> reduce_node,
+    std::function<void(u32 point_id)> reduce_point,
+    std::function<bool(axis_aligned_bounding_box aabb)> stop_condition)
+{
+    reduce_impl(root_node_id, reduce_node, reduce_point, stop_condition);
+}
+
+void quadtree::reduce_impl(
+    node_id_t current,
+    std::function<void(u32 node_id)> reduce_node,
+    std::function<void(u32 point_id)> reduce_point,
+    std::function<bool(axis_aligned_bounding_box aabb)> stop_condition)
+{
+    if (stop_condition(nodes_[current].box)) {
+        reduce_node(current);
+    } else {
+        if (nodes_[current].is_leaf()) {
+            for (u32 i = node_points_begin_[current]; i < node_points_begin_[current + 1]; ++i) {
+                reduce_point(i);
+            }
+        } else {
+            for (u32 i = 0; i < 2; ++i) {
+                for (u32 j = 0; j < 2; ++j) {
+                    if (nodes_[current].children[i][j] == null_child_node_id) {
+                        continue;
+                    }
+                    reduce_impl(nodes_[current].children[i][j], reduce_node, reduce_point, stop_condition);
+                }
+            }
+        }
+    }
+}
+
 }

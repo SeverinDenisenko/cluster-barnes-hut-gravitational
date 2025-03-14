@@ -3,6 +3,7 @@
 
 #include "linalg.hpp"
 #include "logging.hpp"
+#include "spdlog/fmt/bundled/format.h"
 #include "tree.hpp"
 
 using namespace bh;
@@ -13,10 +14,11 @@ int main()
 
     LOG_INFO("Starting standalone application...");
 
+    u32 n                  = 2;
     std::vector<vec2> pos  = { vec2 { -1.0, 0.0 }, vec2 { 1.0, 0.0 } };
     std::vector<vec2> vel  = { vec2 { 0.0, 1.0 }, vec2 { 0.0, -1.0 } };
     std::vector<vec2> acc  = { vec2 { 0.0, 0.0 }, vec2 { 0.0, 0.0 } };
-    std::vector<real> mass = { 1.0, 2.0 };
+    std::vector<real> mass = { 1.0, 1.0 };
 
     quadtree tree = quadtree::build(pos);
 
@@ -48,6 +50,31 @@ int main()
     });
 
     // Make iteration
+
+    for (u32 i = 0; i < n; ++i) {
+        vec2 acc {};
+
+        vec2 p = pos[i];
+
+        tree.reduce(
+            [&acc, &node_mass_center, &node_mass, &p]([[maybe_unused]] u32 node) {
+                vec2 r = p - node_mass_center[node];
+                acc    = acc + r * node_mass[node] / std::pow(r.len(), 3);
+            },
+            [&acc, &pos, &mass, &p, &i]([[maybe_unused]] u32 point) {
+                if (point == i) {
+                    return;
+                }
+
+                vec2 r = p - pos[point];
+                acc    = acc + r * mass[point] / std::pow(r.len(), 3);
+            },
+            [&p]([[maybe_unused]] quadtree::axis_aligned_bounding_box aabb) -> bool {
+                return (aabb.max - aabb.min).len() / (p - aabb.max).len() < 0.1;
+            });
+
+        LOG_INFO(fmt::format("acc: [{},{}]", acc[0], acc[1]));
+    }
 
     return 0;
 }
