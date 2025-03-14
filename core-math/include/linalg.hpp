@@ -6,9 +6,12 @@
 
 namespace bh {
 
-using vec2 = vector<real, 2>;
-using vec3 = vector<real, 3>;
-using vec4 = vector<real, 4>;
-using vec6 = vector<real, 6>;
+template <u32 Dim>
+using vec = vector<real, Dim>;
+
+using vec2 = vec<2>;
+using vec3 = vec<3>;
+using vec4 = vec<4>;
+using vec6 = vec<6>;
 
 }

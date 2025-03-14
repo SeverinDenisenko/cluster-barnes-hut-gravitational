@@ -17,18 +17,21 @@ public:
     template <typename T>
     using internal_interator = internal_container<T>::iterator;
 
-    using point_container = internal_container<vec2>;
-    using point_iterator  = internal_interator<vec2>;
-
     static constexpr u32 max_tree_depth = 100;
+    static constexpr u32 tree_dimention = 2;
+
+    using point = vec<tree_dimention>;
+
+    using point_container = internal_container<point>;
+    using point_iterator  = internal_interator<point>;
 
     struct axis_aligned_bounding_box {
-        static constexpr real inf = std::numeric_limits<vec2::data_t>::infinity();
+        static constexpr real inf = std::numeric_limits<point::data_t>::infinity();
 
-        vec2 min { inf, inf };
-        vec2 max { -inf, -inf };
+        point min { inf, inf };
+        point max { -inf, -inf };
 
-        axis_aligned_bounding_box& operator|=(vec2 const& p);
+        axis_aligned_bounding_box& operator|=(point const& p);
 
         static axis_aligned_bounding_box create(point_iterator begin, point_iterator end);
     };
@@ -76,10 +79,13 @@ private:
     // Root node cannot be a child
     static constexpr node_id_t null_child_node_id = node_id_t(root_node_id);
 
+    static constexpr u32 node_child_count = 1 << tree_dimention;
+
     struct node_t {
         axis_aligned_bounding_box box {};
-        node_id_t children[2][2] { { null_child_node_id, null_child_node_id },
-                                   { null_child_node_id, null_child_node_id } };
+        node_id_t children[node_child_count] {
+            null_child_node_id, null_child_node_id, null_child_node_id, null_child_node_id
+        };
 
         bool is_leaf();
     };

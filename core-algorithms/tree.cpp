@@ -60,26 +60,26 @@ quadtree::build_impl(axis_aligned_bounding_box const& bbox, point_iterator begin
         return current_id;
     }
 
-    vec2 center = (bbox.min + bbox.max) / 2.0;
+    point center = (bbox.min + bbox.max) / 2.0;
 
-    auto bottom = [center](vec2 const& p) { return p[1] < center[1]; };
-    auto left   = [center](vec2 const& p) { return p[0] < center[0]; };
+    auto bottom = [center](point const& p) { return p[1] < center[1]; };
+    auto left   = [center](point const& p) { return p[0] < center[0]; };
 
-    std::vector<vec2>::iterator split_y       = std::partition(begin, end, bottom);
-    std::vector<vec2>::iterator split_x_lower = std::partition(begin, split_y, left);
-    std::vector<vec2>::iterator split_x_upper = std::partition(split_y, end, left);
+    point_iterator split_y       = std::partition(begin, end, bottom);
+    point_iterator split_x_lower = std::partition(begin, split_y, left);
+    point_iterator split_x_upper = std::partition(split_y, end, left);
 
     axis_aligned_bounding_box box_0_0 = { bbox.min, center };
-    nodes_[current_id].children[0][0] = build_impl(box_0_0, begin, split_x_lower, depth_limit - 1);
+    nodes_[current_id].children[0]    = build_impl(box_0_0, begin, split_x_lower, depth_limit - 1);
 
-    axis_aligned_bounding_box box_0_1 = { vec2 { center[0], bbox.min[1] }, vec2 { bbox.max[0], center[1] } };
-    nodes_[current_id].children[0][1] = build_impl(box_0_1, split_x_lower, split_y, depth_limit - 1);
+    axis_aligned_bounding_box box_0_1 = { point { center[0], bbox.min[1] }, point { bbox.max[0], center[1] } };
+    nodes_[current_id].children[1]    = build_impl(box_0_1, split_x_lower, split_y, depth_limit - 1);
 
-    axis_aligned_bounding_box box_1_0 = { vec2 { bbox.min[0], center[1] }, vec2 { center[0], bbox.max[1] } };
-    nodes_[current_id].children[1][0] = build_impl(box_1_0, split_y, split_x_upper, depth_limit - 1);
+    axis_aligned_bounding_box box_1_0 = { point { bbox.min[0], center[1] }, point { center[0], bbox.max[1] } };
+    nodes_[current_id].children[2]    = build_impl(box_1_0, split_y, split_x_upper, depth_limit - 1);
 
     axis_aligned_bounding_box box_1_1 = { center, bbox.max };
-    nodes_[current_id].children[1][1] = build_impl(box_1_1, split_x_upper, end, depth_limit - 1);
+    nodes_[current_id].children[3]    = build_impl(box_1_1, split_x_upper, end, depth_limit - 1);
 
     return current_id;
 }
@@ -108,21 +108,19 @@ void quadtree::walk_nodes(std::function<void(u32 node_id, u32 child_id)> reduce_
             continue;
         }
 
-        for (u32 i = 0; i < 2; ++i) {
-            for (u32 j = 0; j < 2; ++j) {
-                if (nodes_[node].children[i][j] == null_child_node_id) {
-                    continue;
-                }
-                reduce_node(node, nodes_[node].children[i][j]);
+        for (u32 i = 0; i < node_child_count; ++i) {
+            if (nodes_[node].children[i] == null_child_node_id) {
+                continue;
             }
+            reduce_node(node, nodes_[node].children[i]);
         }
     }
 }
 
-quadtree::axis_aligned_bounding_box& quadtree::axis_aligned_bounding_box::operator|=(vec2 const& p)
+quadtree::axis_aligned_bounding_box& quadtree::axis_aligned_bounding_box::operator|=(point const& p)
 {
-    min = vec2::min(min, p);
-    max = vec2::max(max, p);
+    min = point::min(min, p);
+    max = point::max(max, p);
     return *this;
 }
 
@@ -137,8 +135,8 @@ quadtree::axis_aligned_bounding_box::create(point_iterator begin, point_iterator
 
 bool quadtree::node_t::is_leaf()
 {
-    return children[0][0] == null_child_node_id && children[0][1] == null_child_node_id
-        && children[1][0] == null_child_node_id && children[1][1] == null_child_node_id;
+    return std::all_of(
+        std::begin(children), std::end(children), [](const node_id_t id) { return id == null_child_node_id; });
 }
 
 void quadtree::reduce(
@@ -163,13 +161,11 @@ void quadtree::reduce_impl(
                 reduce_point(i);
             }
         } else {
-            for (u32 i = 0; i < 2; ++i) {
-                for (u32 j = 0; j < 2; ++j) {
-                    if (nodes_[current].children[i][j] == null_child_node_id) {
-                        continue;
-                    }
-                    reduce_impl(nodes_[current].children[i][j], reduce_node, reduce_point, stop_condition);
+            for (u32 i = 0; i < node_child_count; ++i) {
+                if (nodes_[current].children[i] == null_child_node_id) {
+                    continue;
                 }
+                reduce_impl(nodes_[current].children[i], reduce_node, reduce_point, stop_condition);
             }
         }
     }
