@@ -8,103 +8,114 @@
 
 namespace bh {
 
+struct point {
+    vec2 position {};
+    u32 amout {};
+};
+
+struct node {
+    u32 sum {};
+};
+
+using test_quadtree = quadtree<point, node>;
+
 TEST(QuadTreeTest, EmptyTest)
 {
-    std::vector<quadtree::positional_data> data = {};
+    std::vector<point> data = {};
 
-    quadtree tree = quadtree::build(data);
+    test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 0);
 }
 
 TEST(QuadTreeTest, SingularTest)
 {
-    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } } };
 
-    quadtree tree = quadtree::build(data);
+    test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 1);
 }
 
 TEST(QuadTreeTest, ConstructTest)
 {
-    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
+                                point { .position = vec2 { -1.0, 1.0 } },
+                                point { .position = vec2 { 1.0, -1.0 } },
+                                point { .position = vec2 { 1.0, 1.0 } } };
 
-    quadtree tree = quadtree::build(data);
+    test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 4 + 1);
 }
 
 TEST(QuadTreeTest, BalanceTest)
 {
-    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
+                                point { .position = vec2 { -1.0, 1.0 } },
+                                point { .position = vec2 { 1.0, -1.0 } } };
 
-    quadtree tree = quadtree::build(data);
+    test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 3 + 1);
 }
 
 TEST(QuadTreeTest, DuplicateTest)
 {
-    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
+                                point { .position = vec2 { -1.0, -1.0 } },
+                                point { .position = vec2 { 1.0, 1.0 } },
+                                point { .position = vec2 { 1.0, 1.0 } } };
 
-    quadtree tree = quadtree::build(data);
+    test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 2 + 1);
 }
 
 TEST(QuadTreeTest, RebuildTest)
 {
-    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
+                                point { .position = vec2 { -1.0, 1.0 } },
+                                point { .position = vec2 { 1.0, -1.0 } },
+                                point { .position = vec2 { 1.0, 1.0 } } };
 
-    quadtree tree = quadtree::build(data);
+    test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 4 + 1);
 
-    quadtree::rebuild(tree);
+    test_quadtree::rebuild(tree);
 
     EXPECT_EQ(tree.node_count(), 4 + 1);
 }
 
 TEST(QuadTreeTest, ChangeRebuildTest)
 {
-    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
+                                point { .position = vec2 { -1.0, 1.0 } },
+                                point { .position = vec2 { 1.0, -1.0 } },
+                                point { .position = vec2 { 1.0, 1.0 } } };
 
-    quadtree tree = quadtree::build(data);
+    test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 4 + 1);
 
     data[2] = data[0];
     data[3] = data[1];
 
-    quadtree::rebuild(tree);
+    test_quadtree::rebuild(tree);
 
     EXPECT_EQ(tree.node_count(), 2 + 1);
 }
 
 TEST(QuadTreeTest, WalkLeafTest)
 {
-    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
-    std::vector<u8> external_data               = { 1, 2, 3, 4 };
+    std::vector<point> data       = { point { .position = vec2 { -1.0, -1.0 } },
+                                      point { .position = vec2 { -1.0, 1.0 } },
+                                      point { .position = vec2 { 1.0, -1.0 } },
+                                      point { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<u8> external_data = { 1, 2, 3, 4 };
 
-    quadtree tree = quadtree::build(data);
+    test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 4 + 1);
 
@@ -117,13 +128,13 @@ TEST(QuadTreeTest, WalkLeafTest)
 
 TEST(QuadTreeTest, WalkNodesTest)
 {
-    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
-    std::vector<u8> external_data               = { 1, 1, 1, 1 };
+    std::vector<point> data       = { point { .position = vec2 { -1.0, -1.0 } },
+                                      point { .position = vec2 { -1.0, 1.0 } },
+                                      point { .position = vec2 { 1.0, -1.0 } },
+                                      point { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<u8> external_data = { 1, 1, 1, 1 };
 
-    quadtree tree = quadtree::build(data);
+    test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 4 + 1);
 
@@ -142,14 +153,14 @@ TEST(QuadTreeTest, WalkNodesTest)
 
 TEST(QuadTreeTest, WalkNodesTestBalance)
 {
-    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
+                                point { .position = vec2 { -1.0, -1.0 } },
+                                point { .position = vec2 { 1.0, 1.0 } },
+                                point { .position = vec2 { 1.0, 1.0 } } };
 
     std::vector<u8> external_data = { 1, 1, 1, 1 };
 
-    quadtree tree = quadtree::build(data);
+    test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 2 + 1);
 
@@ -166,13 +177,13 @@ TEST(QuadTreeTest, WalkNodesTestBalance)
 
 TEST(QuadTreeTest, ReduceTest)
 {
-    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
-                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
-    std::vector<u8> external_data               = { 1, 1, 1, 1 };
+    std::vector<point> data       = { point { .position = vec2 { -1.0, -1.0 } },
+                                      point { .position = vec2 { -1.0, 1.0 } },
+                                      point { .position = vec2 { 1.0, -1.0 } },
+                                      point { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<u8> external_data = { 1, 1, 1, 1 };
 
-    quadtree tree = quadtree::build(data);
+    test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 4 + 1);
 
@@ -189,17 +200,17 @@ TEST(QuadTreeTest, ReduceTest)
     tree.reduce(
         []([[maybe_unused]] u32 node) { return; },
         [&points_sum, &external_data](u32 point) { points_sum += external_data[point]; },
-        []([[maybe_unused]] quadtree::axis_aligned_bounding_box aabb) -> bool { return false; });
+        []([[maybe_unused]] test_quadtree::axis_aligned_bounding_box aabb) -> bool { return false; });
 
     tree.reduce(
         [&nodes_sum, &nodes_data](u32 node) { nodes_sum += nodes_data[node]; },
         []([[maybe_unused]] u32 point) { return; },
-        []([[maybe_unused]] quadtree::axis_aligned_bounding_box aabb) -> bool { return true; });
+        []([[maybe_unused]] test_quadtree::axis_aligned_bounding_box aabb) -> bool { return true; });
 
     tree.reduce(
         [&combined_sum, &nodes_data](u32 node) { combined_sum += nodes_data[node]; },
         [&combined_sum, &external_data](u32 point) { combined_sum += external_data[point]; },
-        []([[maybe_unused]] quadtree::axis_aligned_bounding_box aabb) -> bool { return rand() % 2; });
+        []([[maybe_unused]] test_quadtree::axis_aligned_bounding_box aabb) -> bool { return rand() % 2; });
 
     EXPECT_EQ(nodes_sum, 4);
     EXPECT_EQ(points_sum, 4);

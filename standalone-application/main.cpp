@@ -1,3 +1,4 @@
+#include <cinttypes>
 #include <fstream>
 #include <functional>
 #include <utility>
@@ -7,6 +8,7 @@
 #include "logging.hpp"
 #include "spdlog/fmt/bundled/format.h"
 #include "tree.hpp"
+#include "types.hpp"
 
 using namespace bh;
 
@@ -20,29 +22,37 @@ int main()
     real t0 = 0.0;
     real t  = 2 * M_PI;
 
-    std::vector<quadtree::positional_data> data
-        = { quadtree::positional_data { .position = vec2 { -0.5, 0.0 }, .velosity = vec2 { 0.0, 0.5 }, .mass = 0.5 },
-            quadtree::positional_data { .position = vec2 { 0.5, 0.0 }, .velosity = vec2 { 0.0, -0.5 }, .mass = 0.5 } };
-
-    std::vector<quadtree::positional_data> data_copy = data;
-
-    u32 n = data.size();
-
-    // Preallocate nodes
-
-    quadtree tree = quadtree::build(data);
+    struct point_t {
+        vec2 position {};
+        vec2 velosity {};
+        real mass;
+    };
 
     struct node_data_t {
         real mass {};
         vec2 mass_center {};
     };
 
+    using nbody_quadree = quadtree<point_t, node_data_t>;
+
+    std::vector<point_t> data
+        = { point_t { .position = vec2 { -0.5, 0.0 }, .velosity = vec2 { 0.0, 0.5 }, .mass = 0.5 },
+            point_t { .position = vec2 { 0.5, 0.0 }, .velosity = vec2 { 0.0, -0.5 }, .mass = 0.5 } };
+
+    std::vector<point_t> data_copy = data;
+
+    u32 n = data.size();
+
+    // Preallocate nodes
+
+    nbody_quadree tree = nbody_quadree::build(data);
+
     std::ofstream results("data.txt");
 
     while (t0 < t) {
         // Rebuild tree
 
-        quadtree::rebuild(tree);
+        nbody_quadree::rebuild(tree);
 
         std::vector<node_data_t> node_data(tree.node_count());
 
@@ -89,7 +99,7 @@ int main()
                     vec2 r = data[i].position - data[point].position;
                     acc    = acc - r * data[point].mass / std::pow(r.len(), 3);
                 },
-                [&data, i](quadtree::axis_aligned_bounding_box aabb) -> bool {
+                [&data, i](nbody_quadree::axis_aligned_bounding_box aabb) -> bool {
                     return (aabb.max - aabb.min).len() / (data[i].position - aabb.max).len() < 0.1;
                 });
 
