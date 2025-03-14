@@ -60,6 +60,8 @@ quadtree::build_impl(axis_aligned_bounding_box const& bbox, point_iterator begin
         return current_id;
     }
 
+    static_assert(tree_dimention == 2, "Higher dimentions does not implemented");
+
     point center = (bbox.min + bbox.max) / 2.0;
 
     auto bottom = [center](point const& p) { return p[1] < center[1]; };
