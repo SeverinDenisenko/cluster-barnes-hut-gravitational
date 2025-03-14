@@ -109,11 +109,10 @@ TEST(QuadTreeTest, ChangeRebuildTest)
 
 TEST(QuadTreeTest, WalkLeafTest)
 {
-    std::vector<point> data       = { point { .position = vec2 { -1.0, -1.0 } },
-                                      point { .position = vec2 { -1.0, 1.0 } },
-                                      point { .position = vec2 { 1.0, -1.0 } },
-                                      point { .position = vec2 { 1.0, 1.0 } } };
-    std::vector<u8> external_data = { 1, 2, 3, 4 };
+    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 }, .amout = 1 },
+                                point { .position = vec2 { -1.0, 1.0 }, .amout = 2 },
+                                point { .position = vec2 { 1.0, -1.0 }, .amout = 3 },
+                                point { .position = vec2 { 1.0, 1.0 }, .amout = 4 } };
 
     test_quadtree tree = test_quadtree::build(data);
 
@@ -121,95 +120,85 @@ TEST(QuadTreeTest, WalkLeafTest)
 
     u8 sum = 0;
 
-    tree.walk_leafs([&sum, &external_data]([[maybe_unused]] u8 node, u8 point) { sum += external_data[point]; });
+    tree.walk_leafs([&sum]([[maybe_unused]] node& n, point& p) { sum += p.amout; });
 
     EXPECT_EQ(sum, 10);
 }
 
 TEST(QuadTreeTest, WalkNodesTest)
 {
-    std::vector<point> data       = { point { .position = vec2 { -1.0, -1.0 } },
-                                      point { .position = vec2 { -1.0, 1.0 } },
-                                      point { .position = vec2 { 1.0, -1.0 } },
-                                      point { .position = vec2 { 1.0, 1.0 } } };
-    std::vector<u8> external_data = { 1, 1, 1, 1 };
+    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 }, .amout = 1 },
+                                point { .position = vec2 { -1.0, 1.0 }, .amout = 1 },
+                                point { .position = vec2 { 1.0, -1.0 }, .amout = 1 },
+                                point { .position = vec2 { 1.0, 1.0 }, .amout = 1 } };
 
     test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 4 + 1);
 
-    std::vector<u8> nodes_data(tree.node_count());
+    tree.walk_leafs([](node& n, point& p) { n.sum += p.amout; });
 
-    tree.walk_leafs([&nodes_data, &external_data](u8 node, u8 point) { nodes_data[node] += external_data[point]; });
+    tree.walk_nodes([](node& n, node& c) { n.sum += c.sum; });
 
-    tree.walk_nodes([&nodes_data](u8 node, u8 child) { nodes_data[node] += nodes_data[child]; });
-
-    EXPECT_EQ(nodes_data[0], 4);
-    EXPECT_EQ(nodes_data[1], 1);
-    EXPECT_EQ(nodes_data[2], 1);
-    EXPECT_EQ(nodes_data[3], 1);
-    EXPECT_EQ(nodes_data[4], 1);
+    EXPECT_EQ(tree.get_node(0).sum, 4);
+    EXPECT_EQ(tree.get_node(1).sum, 1);
+    EXPECT_EQ(tree.get_node(2).sum, 1);
+    EXPECT_EQ(tree.get_node(3).sum, 1);
+    EXPECT_EQ(tree.get_node(4).sum, 1);
 }
 
 TEST(QuadTreeTest, WalkNodesTestBalance)
 {
-    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
-                                point { .position = vec2 { -1.0, -1.0 } },
-                                point { .position = vec2 { 1.0, 1.0 } },
-                                point { .position = vec2 { 1.0, 1.0 } } };
-
-    std::vector<u8> external_data = { 1, 1, 1, 1 };
+    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 }, .amout = 1 },
+                                point { .position = vec2 { -1.0, -1.0 }, .amout = 1 },
+                                point { .position = vec2 { 1.0, 1.0 }, .amout = 1 },
+                                point { .position = vec2 { 1.0, 1.0 }, .amout = 1 } };
 
     test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 2 + 1);
 
-    std::vector<u8> nodes_data(tree.node_count());
+    tree.walk_leafs([](node& n, point& p) { n.sum += p.amout; });
 
-    tree.walk_leafs([&nodes_data, &external_data](u8 node, u8 point) { nodes_data[node] += external_data[point]; });
+    tree.walk_nodes([](node& n, node& c) { n.sum += c.sum; });
 
-    tree.walk_nodes([&nodes_data](u8 node, u8 child) { nodes_data[node] += nodes_data[child]; });
-
-    EXPECT_EQ(nodes_data[0], 4);
-    EXPECT_EQ(nodes_data[1], 2);
-    EXPECT_EQ(nodes_data[2], 2);
+    EXPECT_EQ(tree.get_node(0).sum, 4);
+    EXPECT_EQ(tree.get_node(1).sum, 2);
+    EXPECT_EQ(tree.get_node(2).sum, 2);
 }
 
 TEST(QuadTreeTest, ReduceTest)
 {
-    std::vector<point> data       = { point { .position = vec2 { -1.0, -1.0 } },
-                                      point { .position = vec2 { -1.0, 1.0 } },
-                                      point { .position = vec2 { 1.0, -1.0 } },
-                                      point { .position = vec2 { 1.0, 1.0 } } };
-    std::vector<u8> external_data = { 1, 1, 1, 1 };
+    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 }, .amout = 1 },
+                                point { .position = vec2 { -1.0, 1.0 }, .amout = 1 },
+                                point { .position = vec2 { 1.0, -1.0 }, .amout = 1 },
+                                point { .position = vec2 { 1.0, 1.0 }, .amout = 1 } };
 
     test_quadtree tree = test_quadtree::build(data);
 
     EXPECT_EQ(tree.node_count(), 4 + 1);
 
-    std::vector<u8> nodes_data(tree.node_count());
+    tree.walk_leafs([](node& n, point& p) { n.sum += p.amout; });
 
-    tree.walk_leafs([&nodes_data, &external_data](u8 node, u8 point) { nodes_data[node] += external_data[point]; });
-
-    tree.walk_nodes([&nodes_data](u8 node, u8 child) { nodes_data[node] += nodes_data[child]; });
+    tree.walk_nodes([](node& n, node& c) { n.sum += c.sum; });
 
     u32 points_sum   = 0;
     u32 nodes_sum    = 0;
     u32 combined_sum = 0;
 
     tree.reduce(
-        []([[maybe_unused]] u32 node) { return; },
-        [&points_sum, &external_data](u32 point) { points_sum += external_data[point]; },
+        []([[maybe_unused]] node& node) { return; },
+        [&points_sum](point& point) { points_sum += point.amout; },
         []([[maybe_unused]] test_quadtree::axis_aligned_bounding_box aabb) -> bool { return false; });
 
     tree.reduce(
-        [&nodes_sum, &nodes_data](u32 node) { nodes_sum += nodes_data[node]; },
-        []([[maybe_unused]] u32 point) { return; },
+        [&nodes_sum](node& node) { nodes_sum += node.sum; },
+        []([[maybe_unused]] point& point) { return; },
         []([[maybe_unused]] test_quadtree::axis_aligned_bounding_box aabb) -> bool { return true; });
 
     tree.reduce(
-        [&combined_sum, &nodes_data](u32 node) { combined_sum += nodes_data[node]; },
-        [&combined_sum, &external_data](u32 point) { combined_sum += external_data[point]; },
+        [&combined_sum](node& node) { combined_sum += node.sum; },
+        [&combined_sum](point& point) { combined_sum += point.amout; },
         []([[maybe_unused]] test_quadtree::axis_aligned_bounding_box aabb) -> bool { return rand() % 2; });
 
     EXPECT_EQ(nodes_sum, 4);

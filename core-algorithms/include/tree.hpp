@@ -72,7 +72,17 @@ public:
         return nodes_.size();
     }
 
-    void walk_leafs(std::function<void(u32 node_id, u32 point_id)> reduce_leafs)
+    NodeData& get_node(u32 i)
+    {
+        return nodes_[i].data;
+    }
+
+    PositionalData& get_point(u32 i)
+    {
+        return points_[i];
+    }
+
+    void walk_leafs(std::function<void(NodeData&, PositionalData&)> reduce_leafs)
     {
         for (node_id_t id = 0; id < nodes_.size(); ++id) {
             node_id_t node = nodes_.size() - 1 - id;
@@ -81,13 +91,13 @@ public:
                 continue;
             }
 
-            for (u32 i = node_points_begin_[node]; i < node_points_begin_[node + 1]; ++i) {
-                reduce_leafs(node, i);
+            for (u32 point = node_points_begin_[node]; point < node_points_begin_[node + 1]; ++point) {
+                reduce_leafs(nodes_[node].data, points_[point]);
             }
         }
     }
 
-    void walk_nodes(std::function<void(u32 node_id, u32 child_id)> reduce_node)
+    void walk_nodes(std::function<void(NodeData&, NodeData&)> reduce_node)
     {
         for (node_id_t id = 0; id < nodes_.size(); ++id) {
             node_id_t node = nodes_.size() - 1 - id;
@@ -96,18 +106,18 @@ public:
                 continue;
             }
 
-            for (u32 i = 0; i < node_child_count; ++i) {
-                if (nodes_[node].children[i] == null_child_node_id) {
+            for (u32 child = 0; child < node_child_count; ++child) {
+                if (nodes_[node].children[child] == null_child_node_id) {
                     continue;
                 }
-                reduce_node(node, nodes_[node].children[i]);
+                reduce_node(nodes_[node].data, nodes_[nodes_[node].children[child]].data);
             }
         }
     }
 
     void reduce(
-        std::function<void(u32 node_id)> reduce_node,
-        std::function<void(u32 point_id)> reduce_point,
+        std::function<void(NodeData&)> reduce_node,
+        std::function<void(PositionalData&)> reduce_point,
         std::function<bool(axis_aligned_bounding_box aabb)> stop_condition)
     {
         reduce_impl(root_node_id, reduce_node, reduce_point, stop_condition);
@@ -118,16 +128,16 @@ private:
 
     void reduce_impl(
         node_id_t current,
-        std::function<void(u32 node_id)> reduce_node,
-        std::function<void(u32 point_id)> reduce_point,
+        std::function<void(NodeData&)> reduce_node,
+        std::function<void(PositionalData&)> reduce_point,
         std::function<bool(axis_aligned_bounding_box aabb)> stop_condition)
     {
         if (stop_condition(nodes_[current].box)) {
-            reduce_node(current);
+            reduce_node(nodes_[current].data);
         } else {
             if (nodes_[current].is_leaf()) {
-                for (u32 i = node_points_begin_[current]; i < node_points_begin_[current + 1]; ++i) {
-                    reduce_point(i);
+                for (u32 point = node_points_begin_[current]; point < node_points_begin_[current + 1]; ++point) {
+                    reduce_point(points_[point]);
                 }
             } else {
                 for (u32 i = 0; i < node_child_count; ++i) {

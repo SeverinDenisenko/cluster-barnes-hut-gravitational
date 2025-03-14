@@ -1,4 +1,3 @@
-#include <cinttypes>
 #include <fstream>
 #include <functional>
 #include <utility>
@@ -25,7 +24,7 @@ int main()
     struct point_t {
         vec2 position {};
         vec2 velosity {};
-        real mass;
+        real mass {};
     };
 
     struct node_data_t {
@@ -54,57 +53,55 @@ int main()
 
         nbody_quadree::rebuild(tree);
 
-        std::vector<node_data_t> node_data(tree.node_count());
-
         // Compute node masses
 
-        tree.walk_leafs([&node_data, &data](u32 node, u32 point) { node_data[node].mass += data[point].mass; });
+        tree.walk_leafs([](node_data_t& node, point_t point) { node.mass += point.mass; });
 
-        tree.walk_nodes([&node_data](u32 parent, u32 child) { node_data[parent].mass += node_data[child].mass; });
+        tree.walk_nodes([](node_data_t& parent, node_data_t& child) { parent.mass += child.mass; });
 
         // Compute node mass centers
 
-        tree.walk_leafs([&node_data, &data](u32 node, u32 point) {
-            node_data[node].mass_center = data[point].position * data[point].mass + node_data[node].mass_center;
+        tree.walk_leafs([](node_data_t& node, point_t point) {
+            node.mass_center = point.position * point.mass + node.mass_center;
         });
 
-        tree.walk_leafs([&node_data](u32 node, [[maybe_unused]] u32 point) {
-            node_data[node].mass_center = node_data[node].mass_center / node_data[node].mass;
+        tree.walk_leafs(
+            [](node_data_t& node, [[maybe_unused]] point_t point) { node.mass_center = node.mass_center / node.mass; });
+
+        tree.walk_nodes([](node_data_t& parent, node_data_t& child) {
+            parent.mass_center = child.mass_center * child.mass + parent.mass_center;
         });
 
-        tree.walk_nodes([&node_data](u32 parent, u32 child) {
-            node_data[parent].mass_center
-                = node_data[child].mass_center * node_data[child].mass + node_data[parent].mass_center;
-        });
-
-        tree.walk_nodes([&node_data](u32 parent, [[maybe_unused]] u32 child) {
-            node_data[parent].mass_center = node_data[parent].mass_center / node_data[parent].mass;
+        tree.walk_nodes([](node_data_t& parent, [[maybe_unused]] node_data_t& child) {
+            parent.mass_center = parent.mass_center / parent.mass;
         });
 
         // Make iteration
 
         for (u32 i = 0; i < n; ++i) {
-            vec2 acc { 0.0, 0.0 };
+            vec2 acceleration { 0.0, 0.0 };
+
+            point_t& current = tree.get_point(i);
 
             tree.reduce(
-                [&acc, &node_data, &data, i](u32 node) {
-                    vec2 r = data[i].position - node_data[node].mass_center;
-                    acc    = acc - r * node_data[node].mass / std::pow(r.len(), 3);
+                [&acceleration, &current](node_data_t& node) {
+                    vec2 r       = current.position - node.mass_center;
+                    acceleration = acceleration - r * node.mass / std::pow(r.len(), 3);
                 },
-                [&acc, &data, i](u32 point) {
-                    if (point == i) {
+                [&acceleration, &current](point_t& point) {
+                    if (point.position == current.position) {
                         return;
                     }
 
-                    vec2 r = data[i].position - data[point].position;
-                    acc    = acc - r * data[point].mass / std::pow(r.len(), 3);
+                    vec2 r       = current.position - point.position;
+                    acceleration = acceleration - r * point.mass / std::pow(r.len(), 3);
                 },
                 [&data, i](nbody_quadree::axis_aligned_bounding_box aabb) -> bool {
                     return (aabb.max - aabb.min).len() / (data[i].position - aabb.max).len() < 0.1;
                 });
 
-            data_copy[i].position = data[i].position + data[i].velosity * dt + acc * dt * dt / 2.0;
-            data_copy[i].velosity = data[i].velosity + acc * dt;
+            data_copy[i].position = current.position + current.velosity * dt + acceleration * dt * dt / 2.0;
+            data_copy[i].velosity = current.velosity + acceleration * dt;
 
             results << fmt::format("{:+.8f} {:+.8f} {:+.8f}\n", t0, data[i].position[0], data[i].position[1]);
         }
