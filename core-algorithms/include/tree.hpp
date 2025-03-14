@@ -189,6 +189,8 @@ private:
         }
     };
 
+    using node_container = internal_container<node_t>;
+
     node_id_t
     build_impl(axis_aligned_bounding_box const& bbox, point_iterator begin, point_iterator end, u32 depth_limit)
     {
@@ -198,6 +200,8 @@ private:
 
         node_id_t current_id = nodes_.size();
         nodes_.emplace_back();
+
+        nodes_[current_id].box = bbox;
 
         node_points_begin_.emplace_back();
         node_points_begin_[current_id] = std::distance(points_.begin(), begin);
@@ -242,7 +246,7 @@ private:
     }
 
     point_container& points_;
-    internal_container<node_t> nodes_;
+    node_container nodes_;
     internal_container<u32> node_points_begin_;
 };
 

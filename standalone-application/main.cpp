@@ -1,11 +1,12 @@
+#include <chrono>
 #include <fstream>
 #include <functional>
+#include <random>
 #include <utility>
 #include <vector>
 
 #include "linalg.hpp"
 #include "logging.hpp"
-#include "spdlog/fmt/bundled/format.h"
 #include "tree.hpp"
 #include "types.hpp"
 
@@ -34,22 +35,47 @@ int main()
 
     using nbody_quadree = quadtree<point_t, node_data_t>;
 
-    std::vector<point_t> data
-        = { point_t { .position = vec2 { -0.5, 0.0 }, .velosity = vec2 { 0.0, 0.5 }, .mass = 0.5 },
-            point_t { .position = vec2 { 0.5, 0.0 }, .velosity = vec2 { 0.0, -0.5 }, .mass = 0.5 } };
+    u32 n = 10000;
+
+    std::random_device rd;
+    std::mt19937 e2(rd());
+    std::uniform_real_distribution<> dist(-1.0, 1.0);
+
+    std::vector<point_t> data;
+
+    for (u32 i = 0; i < n; ++i) {
+        data.push_back(point_t { .position = vec2 { dist(e2), dist(e2) },
+                                 .velosity = vec2 { dist(e2) / n, dist(e2) / n },
+                                 .mass     = dist(e2) / n });
+    }
 
     std::vector<point_t> data_copy = data;
 
-    u32 n = data.size();
+    LOG_INFO("Starting calculation...");
 
     // Preallocate nodes
 
     nbody_quadree tree = nbody_quadree::build(data);
 
-    std::ofstream results("data.txt");
+    struct stats {
+        u32 point_hit {};
+        u32 node_hit {};
+    };
+
+    struct time_stats {
+        using clock = std::chrono::high_resolution_clock;
+
+        f32 tree_build_time {};
+        f32 acceleration_calculation_time {};
+    };
+
+    stats hit_stats {};
+    time_stats time_stats;
 
     while (t0 < t) {
         // Rebuild tree
+
+        auto now = time_stats::clock::now();
 
         nbody_quadree::rebuild(tree);
 
@@ -76,6 +102,10 @@ int main()
             parent.mass_center = parent.mass_center / parent.mass;
         });
 
+        time_stats.tree_build_time
+            += std::chrono::duration_cast<std::chrono::milliseconds>(time_stats::clock::now() - now).count();
+        now = time_stats::clock::now();
+
         // Make iteration
 
         for (u32 i = 0; i < n; ++i) {
@@ -84,17 +114,21 @@ int main()
             point_t& current = tree.get_point(i);
 
             tree.reduce(
-                [&acceleration, &current](node_data_t& node) {
+                [&acceleration, &current, &hit_stats](node_data_t& node) {
                     vec2 r       = current.position - node.mass_center;
                     acceleration = acceleration - r * node.mass / std::pow(r.len(), 3);
+
+                    hit_stats.node_hit += 1;
                 },
-                [&acceleration, &current](point_t& point) {
+                [&acceleration, &current, &hit_stats](point_t& point) {
                     if (point.position == current.position) {
                         return;
                     }
 
                     vec2 r       = current.position - point.position;
                     acceleration = acceleration - r * point.mass / std::pow(r.len(), 3);
+
+                    hit_stats.point_hit += 1;
                 },
                 [&data, i](nbody_quadree::axis_aligned_bounding_box aabb) -> bool {
                     return (aabb.max - aabb.min).len() / (data[i].position - aabb.max).len() < 0.1;
@@ -102,14 +136,38 @@ int main()
 
             data_copy[i].position = current.position + current.velosity * dt + acceleration * dt * dt / 2.0;
             data_copy[i].velosity = current.velosity + acceleration * dt;
-
-            results << fmt::format("{:+.8f} {:+.8f} {:+.8f}\n", t0, data[i].position[0], data[i].position[1]);
         }
+
+        time_stats.acceleration_calculation_time
+            += std::chrono::duration_cast<std::chrono::milliseconds>(time_stats::clock::now() - now).count();
+        now = time_stats::clock::now();
 
         std::swap(data, data_copy);
 
+        f32 summary_hits = hit_stats.point_hit + hit_stats.node_hit;
+        LOG_INFO(fmt::format(
+            "Stats: nodes={}, points_evaluations={:.1f}%, nodes_evaluations={:.1f}%",
+            tree.node_count(),
+            hit_stats.point_hit / summary_hits * 100.0,
+            hit_stats.node_hit / summary_hits * 100.0));
+
+        f32 summary_time = time_stats.tree_build_time + time_stats.acceleration_calculation_time;
+        LOG_INFO(fmt::format(
+            "Time stats: tree_build_time={:.1f}%, iteration_calculation_time={:.1f}%",
+            time_stats.tree_build_time / summary_time * 100.0,
+            time_stats.acceleration_calculation_time / summary_time * 100.0));
+
         t0 += dt;
     }
+
+    LOG_INFO("Saving results...");
+
+    std::ofstream results("data.txt");
+    for (u32 i = 0; i < n; ++i) {
+        results << fmt::format("{:+.8f} {:+.8f} {:+.8f}\n", t0, data[i].position[0], data[i].position[1]);
+    }
+
+    LOG_INFO("Exiting...");
 
     return 0;
 }
