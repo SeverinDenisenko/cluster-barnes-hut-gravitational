@@ -22,8 +22,14 @@ public:
 
     using point = vec<tree_dimention>;
 
-    using point_container = internal_container<point>;
-    using point_iterator  = internal_interator<point>;
+    struct positional_data {
+        point position;
+        vec2 velosity;
+        real mass;
+    };
+
+    using point_container = internal_container<positional_data>;
+    using point_iterator  = internal_interator<positional_data>;
 
     struct axis_aligned_bounding_box {
         static constexpr real inf = std::numeric_limits<point::data_t>::infinity();

@@ -202,6 +202,11 @@ public:
         return vector::mul(a, b);
     }
 
+    friend vector operator*(const data_t b, const vector& a) noexcept
+    {
+        return vector::mul(a, b);
+    }
+
     friend vector operator/(const vector& a, const data_t b) noexcept
     {
         return vector::div(a, b);

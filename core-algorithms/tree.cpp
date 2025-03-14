@@ -52,7 +52,8 @@ quadtree::build_impl(axis_aligned_bounding_box const& bbox, point_iterator begin
         return current_id;
     }
 
-    if (std::equal(begin + 1, end, begin)) {
+    if (std::equal(
+            begin + 1, end, begin, [](positional_data a, positional_data b) { return a.position == b.position; })) {
         return current_id;
     }
 
@@ -64,8 +65,8 @@ quadtree::build_impl(axis_aligned_bounding_box const& bbox, point_iterator begin
 
     point center = (bbox.min + bbox.max) / 2.0;
 
-    auto bottom = [center](point const& p) { return p[1] < center[1]; };
-    auto left   = [center](point const& p) { return p[0] < center[0]; };
+    auto bottom = [center](const positional_data& p) { return p.position[1] < center[1]; };
+    auto left   = [center](const positional_data& p) { return p.position[0] < center[0]; };
 
     point_iterator split_y       = std::partition(begin, end, bottom);
     point_iterator split_x_lower = std::partition(begin, split_y, left);
@@ -131,7 +132,7 @@ quadtree::axis_aligned_bounding_box::create(point_iterator begin, point_iterator
 {
     axis_aligned_bounding_box result;
     for (auto it = begin; it != end; ++it)
-        result |= *it;
+        result |= it->position;
     return result;
 }
 

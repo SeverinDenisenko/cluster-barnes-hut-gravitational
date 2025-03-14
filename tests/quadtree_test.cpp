@@ -10,7 +10,7 @@ namespace bh {
 
 TEST(QuadTreeTest, EmptyTest)
 {
-    std::vector<vec2> data = {};
+    std::vector<quadtree::positional_data> data = {};
 
     quadtree tree = quadtree::build(data);
 
@@ -19,7 +19,7 @@ TEST(QuadTreeTest, EmptyTest)
 
 TEST(QuadTreeTest, SingularTest)
 {
-    std::vector<vec2> data = { vec2 { -1.0, -1.0 } };
+    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } } };
 
     quadtree tree = quadtree::build(data);
 
@@ -28,7 +28,10 @@ TEST(QuadTreeTest, SingularTest)
 
 TEST(QuadTreeTest, ConstructTest)
 {
-    std::vector<vec2> data = { vec2 { -1.0, -1.0 }, vec2 { -1.0, 1.0 }, vec2 { 1.0, -1.0 }, vec2 { 1.0, 1.0 } };
+    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
 
     quadtree tree = quadtree::build(data);
 
@@ -37,7 +40,9 @@ TEST(QuadTreeTest, ConstructTest)
 
 TEST(QuadTreeTest, BalanceTest)
 {
-    std::vector<vec2> data = { vec2 { -1.0, -1.0 }, vec2 { -1.0, 1.0 }, vec2 { 1.0, -1.0 } };
+    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } } };
 
     quadtree tree = quadtree::build(data);
 
@@ -46,7 +51,10 @@ TEST(QuadTreeTest, BalanceTest)
 
 TEST(QuadTreeTest, DuplicateTest)
 {
-    std::vector<vec2> data = { vec2 { -1.0, -1.0 }, vec2 { -1.0, -1.0 }, vec2 { 1.0, 1.0 }, vec2 { 1.0, 1.0 } };
+    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
 
     quadtree tree = quadtree::build(data);
 
@@ -55,7 +63,10 @@ TEST(QuadTreeTest, DuplicateTest)
 
 TEST(QuadTreeTest, RebuildTest)
 {
-    std::vector<vec2> data = { vec2 { -1.0, -1.0 }, vec2 { -1.0, 1.0 }, vec2 { 1.0, -1.0 }, vec2 { 1.0, 1.0 } };
+    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
 
     quadtree tree = quadtree::build(data);
 
@@ -68,7 +79,10 @@ TEST(QuadTreeTest, RebuildTest)
 
 TEST(QuadTreeTest, ChangeRebuildTest)
 {
-    std::vector<vec2> data = { vec2 { -1.0, -1.0 }, vec2 { -1.0, 1.0 }, vec2 { 1.0, -1.0 }, vec2 { 1.0, 1.0 } };
+    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
 
     quadtree tree = quadtree::build(data);
 
@@ -84,8 +98,11 @@ TEST(QuadTreeTest, ChangeRebuildTest)
 
 TEST(QuadTreeTest, WalkLeafTest)
 {
-    std::vector<vec2> data        = { vec2 { -1.0, -1.0 }, vec2 { -1.0, 1.0 }, vec2 { 1.0, -1.0 }, vec2 { 1.0, 1.0 } };
-    std::vector<u8> external_data = { 1, 2, 3, 4 };
+    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<u8> external_data               = { 1, 2, 3, 4 };
 
     quadtree tree = quadtree::build(data);
 
@@ -100,8 +117,11 @@ TEST(QuadTreeTest, WalkLeafTest)
 
 TEST(QuadTreeTest, WalkNodesTest)
 {
-    std::vector<vec2> data        = { vec2 { -1.0, -1.0 }, vec2 { -1.0, 1.0 }, vec2 { 1.0, -1.0 }, vec2 { 1.0, 1.0 } };
-    std::vector<u8> external_data = { 1, 1, 1, 1 };
+    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<u8> external_data               = { 1, 1, 1, 1 };
 
     quadtree tree = quadtree::build(data);
 
@@ -122,7 +142,11 @@ TEST(QuadTreeTest, WalkNodesTest)
 
 TEST(QuadTreeTest, WalkNodesTestBalance)
 {
-    std::vector<vec2> data        = { vec2 { -1.0, -1.0 }, vec2 { -1.0, -1.0 }, vec2 { 1.0, 1.0 }, vec2 { 1.0, 1.0 } };
+    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
+
     std::vector<u8> external_data = { 1, 1, 1, 1 };
 
     quadtree tree = quadtree::build(data);
@@ -142,8 +166,11 @@ TEST(QuadTreeTest, WalkNodesTestBalance)
 
 TEST(QuadTreeTest, ReduceTest)
 {
-    std::vector<vec2> data        = { vec2 { -1.0, -1.0 }, vec2 { -1.0, 1.0 }, vec2 { 1.0, -1.0 }, vec2 { 1.0, 1.0 } };
-    std::vector<u8> external_data = { 1, 1, 1, 1 };
+    std::vector<quadtree::positional_data> data = { quadtree::positional_data { .position = vec2 { -1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { -1.0, 1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, -1.0 } },
+                                                    quadtree::positional_data { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<u8> external_data               = { 1, 1, 1, 1 };
 
     quadtree tree = quadtree::build(data);
 

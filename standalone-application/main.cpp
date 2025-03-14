@@ -1,4 +1,6 @@
+#include <fstream>
 #include <functional>
+#include <utility>
 #include <vector>
 
 #include "linalg.hpp"
@@ -14,66 +16,92 @@ int main()
 
     LOG_INFO("Starting standalone application...");
 
-    u32 n                  = 2;
-    std::vector<vec2> pos  = { vec2 { -1.0, 0.0 }, vec2 { 1.0, 0.0 } };
-    std::vector<vec2> vel  = { vec2 { 0.0, 1.0 }, vec2 { 0.0, -1.0 } };
-    std::vector<vec2> acc  = { vec2 { 0.0, 0.0 }, vec2 { 0.0, 0.0 } };
-    std::vector<real> mass = { 1.0, 1.0 };
+    real dt = 0.01;
+    real t0 = 0.0;
+    real t  = 2 * M_PI;
 
-    quadtree tree = quadtree::build(pos);
+    std::vector<quadtree::positional_data> data
+        = { quadtree::positional_data { .position = vec2 { -0.5, 0.0 }, .velosity = vec2 { 0.0, 0.5 }, .mass = 0.5 },
+            quadtree::positional_data { .position = vec2 { 0.5, 0.0 }, .velosity = vec2 { 0.0, -0.5 }, .mass = 0.5 } };
 
-    std::vector<real> node_mass(tree.node_count());
-    std::vector<vec2> node_mass_center(tree.node_count());
+    std::vector<quadtree::positional_data> data_copy = data;
 
-    // Compute node masses
+    u32 n = data.size();
 
-    tree.walk_leafs([&node_mass, &mass](u32 node, u32 point) { node_mass[node] += mass[point]; });
+    // Preallocate nodes
 
-    tree.walk_nodes([&node_mass](u32 parent, u32 child) { node_mass[parent] += node_mass[child]; });
+    quadtree tree = quadtree::build(data);
 
-    // Compute node mass centers
+    struct node_data_t {
+        real mass {};
+        vec2 mass_center {};
+    };
 
-    tree.walk_leafs([&node_mass_center, &mass, &pos](u32 node, u32 point) {
-        node_mass_center[node] = pos[point] * mass[point] + node_mass_center[node];
-    });
+    std::ofstream results("data.txt");
 
-    tree.walk_leafs([&node_mass_center, &node_mass](u32 node, [[maybe_unused]] u32 point) {
-        node_mass_center[node] = node_mass_center[node] / node_mass[node];
-    });
+    while (t0 < t) {
+        // Rebuild tree
 
-    tree.walk_nodes([&node_mass_center, &node_mass](u32 parent, u32 child) {
-        node_mass_center[parent] = node_mass_center[child] * node_mass[child] + node_mass_center[parent];
-    });
+        quadtree::rebuild(tree);
 
-    tree.walk_nodes([&node_mass_center, &node_mass](u32 parent, [[maybe_unused]] u32 child) {
-        node_mass_center[parent] = node_mass_center[parent] / node_mass[parent];
-    });
+        std::vector<node_data_t> node_data(tree.node_count());
 
-    // Make iteration
+        // Compute node masses
 
-    for (u32 i = 0; i < n; ++i) {
-        vec2 acc {};
+        tree.walk_leafs([&node_data, &data](u32 node, u32 point) { node_data[node].mass += data[point].mass; });
 
-        vec2 p = pos[i];
+        tree.walk_nodes([&node_data](u32 parent, u32 child) { node_data[parent].mass += node_data[child].mass; });
 
-        tree.reduce(
-            [&acc, &node_mass_center, &node_mass, &p]([[maybe_unused]] u32 node) {
-                vec2 r = p - node_mass_center[node];
-                acc    = acc + r * node_mass[node] / std::pow(r.len(), 3);
-            },
-            [&acc, &pos, &mass, &p, &i]([[maybe_unused]] u32 point) {
-                if (point == i) {
-                    return;
-                }
+        // Compute node mass centers
 
-                vec2 r = p - pos[point];
-                acc    = acc + r * mass[point] / std::pow(r.len(), 3);
-            },
-            [&p]([[maybe_unused]] quadtree::axis_aligned_bounding_box aabb) -> bool {
-                return (aabb.max - aabb.min).len() / (p - aabb.max).len() < 0.1;
-            });
+        tree.walk_leafs([&node_data, &data](u32 node, u32 point) {
+            node_data[node].mass_center = data[point].position * data[point].mass + node_data[node].mass_center;
+        });
 
-        LOG_INFO(fmt::format("acc: [{},{}]", acc[0], acc[1]));
+        tree.walk_leafs([&node_data](u32 node, [[maybe_unused]] u32 point) {
+            node_data[node].mass_center = node_data[node].mass_center / node_data[node].mass;
+        });
+
+        tree.walk_nodes([&node_data](u32 parent, u32 child) {
+            node_data[parent].mass_center
+                = node_data[child].mass_center * node_data[child].mass + node_data[parent].mass_center;
+        });
+
+        tree.walk_nodes([&node_data](u32 parent, [[maybe_unused]] u32 child) {
+            node_data[parent].mass_center = node_data[parent].mass_center / node_data[parent].mass;
+        });
+
+        // Make iteration
+
+        for (u32 i = 0; i < n; ++i) {
+            vec2 acc { 0.0, 0.0 };
+
+            tree.reduce(
+                [&acc, &node_data, &data, i](u32 node) {
+                    vec2 r = data[i].position - node_data[node].mass_center;
+                    acc    = acc - r * node_data[node].mass / std::pow(r.len(), 3);
+                },
+                [&acc, &data, i](u32 point) {
+                    if (point == i) {
+                        return;
+                    }
+
+                    vec2 r = data[i].position - data[point].position;
+                    acc    = acc - r * data[point].mass / std::pow(r.len(), 3);
+                },
+                [&data, i](quadtree::axis_aligned_bounding_box aabb) -> bool {
+                    return (aabb.max - aabb.min).len() / (data[i].position - aabb.max).len() < 0.1;
+                });
+
+            data_copy[i].position = data[i].position + data[i].velosity * dt + acc * dt * dt / 2.0;
+            data_copy[i].velosity = data[i].velosity + acc * dt;
+
+            results << fmt::format("{:+.8f} {:+.8f} {:+.8f}\n", t0, data[i].position[0], data[i].position[1]);
+        }
+
+        std::swap(data, data_copy);
+
+        t0 += dt;
     }
 
     return 0;
