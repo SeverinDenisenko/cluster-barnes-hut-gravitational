@@ -128,9 +128,9 @@ private:
 
     void reduce_impl(
         node_id_t current,
-        std::function<void(NodeData&)> reduce_node,
-        std::function<void(PositionalData&)> reduce_point,
-        std::function<bool(axis_aligned_bounding_box aabb)> stop_condition)
+        std::function<void(NodeData&)>& reduce_node,
+        std::function<void(PositionalData&)>& reduce_point,
+        std::function<bool(axis_aligned_bounding_box aabb)>& stop_condition)
     {
         if (stop_condition(nodes_[current].box)) {
             reduce_node(nodes_[current].data);

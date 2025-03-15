@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cmath>
 #include <fstream>
 #include <functional>
 #include <random>
@@ -39,14 +40,21 @@ int main()
 
     std::random_device rd;
     std::mt19937 e2(rd());
-    std::uniform_real_distribution<> dist(-1.0, 1.0);
+    std::uniform_real_distribution<real> angle_dist(0.0, 2 * M_PI);
+    std::uniform_real_distribution<real> distanse_dist(0.0f, 1.0f);
+    std::uniform_real_distribution<real> mass_dist(0.0f, 1.0f);
 
     std::vector<point_t> data;
 
     for (u32 i = 0; i < n; ++i) {
-        data.push_back(point_t { .position = vec2 { dist(e2), dist(e2) },
-                                 .velosity = vec2 { dist(e2) / n, dist(e2) / n },
-                                 .mass     = dist(e2) / n });
+        real distanse = distanse_dist(e2);
+        real angle    = angle_dist(e2);
+
+        vec2 position = distanse * vec2 { cos(angle), sin(angle) };
+        vec2 velosity = vec2 { -sin(angle), cos(angle) } / n;
+        point_t point { .position = position, .velosity = velosity, .mass = mass_dist(e2) / n };
+
+        data.push_back(point);
     }
 
     std::vector<point_t> data_copy = data;
@@ -58,8 +66,8 @@ int main()
     nbody_quadree tree = nbody_quadree::build(data);
 
     struct stats {
-        u32 point_hit {};
-        u32 node_hit {};
+        f32 point_hit {};
+        f32 node_hit {};
     };
 
     struct time_stats {
@@ -109,14 +117,16 @@ int main()
         // Make iteration
 
         for (u32 i = 0; i < n; ++i) {
-            vec2 acceleration { 0.0, 0.0 };
+            vec2 acceleration { 0.0f, 0.0f };
 
             point_t& current = tree.get_point(i);
 
             tree.reduce(
                 [&acceleration, &current, &hit_stats](node_data_t& node) {
                     vec2 r       = current.position - node.mass_center;
-                    acceleration = acceleration - r * node.mass / std::pow(r.len(), 3);
+                    real len     = r.len();
+                    real r3      = len * len * len;
+                    acceleration = acceleration - r * node.mass / r3;
 
                     hit_stats.node_hit += 1;
                 },
@@ -126,7 +136,9 @@ int main()
                     }
 
                     vec2 r       = current.position - point.position;
-                    acceleration = acceleration - r * point.mass / std::pow(r.len(), 3);
+                    real len     = r.len();
+                    real r3      = len * len * len;
+                    acceleration = acceleration - r * point.mass / r3;
 
                     hit_stats.point_hit += 1;
                 },
@@ -156,6 +168,8 @@ int main()
             "Time stats: tree_build_time={:.1f}%, iteration_calculation_time={:.1f}%",
             time_stats.tree_build_time / summary_time * 100.0,
             time_stats.acceleration_calculation_time / summary_time * 100.0));
+
+        LOG_INFO(fmt::format("Done: {:.1f}%", (1.0 - (t - t0) / t) * 100.0));
 
         t0 += dt;
     }

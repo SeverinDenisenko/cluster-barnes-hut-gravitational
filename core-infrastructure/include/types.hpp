@@ -16,6 +16,6 @@ using i64 = std::int64_t;
 using f64 = double;
 using f32 = float;
 
-using real = f64;
+using real = f32;
 
 }

@@ -30,7 +30,7 @@ TEST(QuadTreeTest, EmptyTest)
 
 TEST(QuadTreeTest, SingularTest)
 {
-    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0f, -1.0f } } };
 
     test_quadtree tree = test_quadtree::build(data);
 
@@ -39,10 +39,10 @@ TEST(QuadTreeTest, SingularTest)
 
 TEST(QuadTreeTest, ConstructTest)
 {
-    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
-                                point { .position = vec2 { -1.0, 1.0 } },
-                                point { .position = vec2 { 1.0, -1.0 } },
-                                point { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0f, -1.0f } },
+                                point { .position = vec2 { -1.0f, 1.0f } },
+                                point { .position = vec2 { 1.0f, -1.0f } },
+                                point { .position = vec2 { 1.0f, 1.0f } } };
 
     test_quadtree tree = test_quadtree::build(data);
 
@@ -51,9 +51,9 @@ TEST(QuadTreeTest, ConstructTest)
 
 TEST(QuadTreeTest, BalanceTest)
 {
-    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
-                                point { .position = vec2 { -1.0, 1.0 } },
-                                point { .position = vec2 { 1.0, -1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0f, -1.0f } },
+                                point { .position = vec2 { -1.0f, 1.0f } },
+                                point { .position = vec2 { 1.0f, -1.0f } } };
 
     test_quadtree tree = test_quadtree::build(data);
 
@@ -62,10 +62,10 @@ TEST(QuadTreeTest, BalanceTest)
 
 TEST(QuadTreeTest, DuplicateTest)
 {
-    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
-                                point { .position = vec2 { -1.0, -1.0 } },
-                                point { .position = vec2 { 1.0, 1.0 } },
-                                point { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0f, -1.0f } },
+                                point { .position = vec2 { -1.0f, -1.0f } },
+                                point { .position = vec2 { 1.0f, 1.0f } },
+                                point { .position = vec2 { 1.0f, 1.0f } } };
 
     test_quadtree tree = test_quadtree::build(data);
 
@@ -74,10 +74,10 @@ TEST(QuadTreeTest, DuplicateTest)
 
 TEST(QuadTreeTest, RebuildTest)
 {
-    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
-                                point { .position = vec2 { -1.0, 1.0 } },
-                                point { .position = vec2 { 1.0, -1.0 } },
-                                point { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0f, -1.0f } },
+                                point { .position = vec2 { -1.0f, 1.0f } },
+                                point { .position = vec2 { 1.0f, -1.0f } },
+                                point { .position = vec2 { 1.0f, 1.0f } } };
 
     test_quadtree tree = test_quadtree::build(data);
 
@@ -90,10 +90,10 @@ TEST(QuadTreeTest, RebuildTest)
 
 TEST(QuadTreeTest, ChangeRebuildTest)
 {
-    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 } },
-                                point { .position = vec2 { -1.0, 1.0 } },
-                                point { .position = vec2 { 1.0, -1.0 } },
-                                point { .position = vec2 { 1.0, 1.0 } } };
+    std::vector<point> data = { point { .position = vec2 { -1.0f, -1.0f } },
+                                point { .position = vec2 { -1.0f, 1.0f } },
+                                point { .position = vec2 { 1.0f, -1.0f } },
+                                point { .position = vec2 { 1.0f, 1.0f } } };
 
     test_quadtree tree = test_quadtree::build(data);
 
@@ -109,10 +109,10 @@ TEST(QuadTreeTest, ChangeRebuildTest)
 
 TEST(QuadTreeTest, WalkLeafTest)
 {
-    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 }, .amout = 1 },
-                                point { .position = vec2 { -1.0, 1.0 }, .amout = 2 },
-                                point { .position = vec2 { 1.0, -1.0 }, .amout = 3 },
-                                point { .position = vec2 { 1.0, 1.0 }, .amout = 4 } };
+    std::vector<point> data = { point { .position = vec2 { -1.0f, -1.0f }, .amout = 1 },
+                                point { .position = vec2 { -1.0f, 1.0f }, .amout = 2 },
+                                point { .position = vec2 { 1.0f, -1.0f }, .amout = 3 },
+                                point { .position = vec2 { 1.0f, 1.0f }, .amout = 4 } };
 
     test_quadtree tree = test_quadtree::build(data);
 
@@ -127,10 +127,10 @@ TEST(QuadTreeTest, WalkLeafTest)
 
 TEST(QuadTreeTest, WalkNodesTest)
 {
-    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 }, .amout = 1 },
-                                point { .position = vec2 { -1.0, 1.0 }, .amout = 1 },
-                                point { .position = vec2 { 1.0, -1.0 }, .amout = 1 },
-                                point { .position = vec2 { 1.0, 1.0 }, .amout = 1 } };
+    std::vector<point> data = { point { .position = vec2 { -1.0f, -1.0f }, .amout = 1 },
+                                point { .position = vec2 { -1.0f, 1.0f }, .amout = 1 },
+                                point { .position = vec2 { 1.0f, -1.0f }, .amout = 1 },
+                                point { .position = vec2 { 1.0f, 1.0f }, .amout = 1 } };
 
     test_quadtree tree = test_quadtree::build(data);
 
@@ -149,10 +149,10 @@ TEST(QuadTreeTest, WalkNodesTest)
 
 TEST(QuadTreeTest, WalkNodesTestBalance)
 {
-    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 }, .amout = 1 },
-                                point { .position = vec2 { -1.0, -1.0 }, .amout = 1 },
-                                point { .position = vec2 { 1.0, 1.0 }, .amout = 1 },
-                                point { .position = vec2 { 1.0, 1.0 }, .amout = 1 } };
+    std::vector<point> data = { point { .position = vec2 { -1.0f, -1.0f }, .amout = 1 },
+                                point { .position = vec2 { -1.0f, -1.0f }, .amout = 1 },
+                                point { .position = vec2 { 1.0f, 1.0f }, .amout = 1 },
+                                point { .position = vec2 { 1.0f, 1.0f }, .amout = 1 } };
 
     test_quadtree tree = test_quadtree::build(data);
 
@@ -169,10 +169,10 @@ TEST(QuadTreeTest, WalkNodesTestBalance)
 
 TEST(QuadTreeTest, ReduceTest)
 {
-    std::vector<point> data = { point { .position = vec2 { -1.0, -1.0 }, .amout = 1 },
-                                point { .position = vec2 { -1.0, 1.0 }, .amout = 1 },
-                                point { .position = vec2 { 1.0, -1.0 }, .amout = 1 },
-                                point { .position = vec2 { 1.0, 1.0 }, .amout = 1 } };
+    std::vector<point> data = { point { .position = vec2 { -1.0f, -1.0f }, .amout = 1 },
+                                point { .position = vec2 { -1.0f, 1.0f }, .amout = 1 },
+                                point { .position = vec2 { 1.0f, -1.0f }, .amout = 1 },
+                                point { .position = vec2 { 1.0f, 1.0f }, .amout = 1 } };
 
     test_quadtree tree = test_quadtree::build(data);
 

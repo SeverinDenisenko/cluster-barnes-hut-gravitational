@@ -10,6 +10,8 @@ mpl.rc("font", **font)
 plt.rc("text", usetex=True)
 ax.set_xlabel(r"$x$")
 ax.set_ylabel(r"$y$")
+# ax.set_xlim(-2.0, 2.0)
+# ax.set_ylim(-2.0, 2.0)
 
 with open("data.txt", "r") as f:
     x = []
