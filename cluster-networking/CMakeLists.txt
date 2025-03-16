@@ -1,7 +1,9 @@
-add_library(cluster-networking STATIC cluster_networking.cpp)
+find_package(MPI REQUIRED)
 
-target_include_directories(cluster-networking PUBLIC include)
-target_link_libraries(cluster-networking PUBLIC )
+add_library(cluster-networking STATIC cluster.cpp)
+
+target_include_directories(cluster-networking PUBLIC include ${MPI_INCLUDE_PATH})
+target_link_libraries(cluster-networking PUBLIC ${MPI_C_LIBRARIES})
 
 if(MSVC)
     target_compile_options(cluster-networking PRIVATE /W4 /WX)
