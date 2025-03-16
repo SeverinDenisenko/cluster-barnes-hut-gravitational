@@ -72,6 +72,11 @@ public:
         return nodes_.size();
     }
 
+    u32 depth() const
+    {
+        return depth_;
+    }
+
     NodeData& get_node(u32 i)
     {
         return nodes_[i].data;
@@ -242,9 +247,12 @@ private:
         axis_aligned_bounding_box box_1_1 = { center, bbox.max };
         nodes_[current_id].children[3]    = build_impl(box_1_1, split_x_upper, end, depth_limit - 1);
 
+        depth_ = std::max(max_tree_depth - depth_limit, depth_);
+
         return current_id;
     }
 
+    u32 depth_ { 0 };
     point_container& points_;
     node_container nodes_;
     internal_container<u32> node_points_begin_;

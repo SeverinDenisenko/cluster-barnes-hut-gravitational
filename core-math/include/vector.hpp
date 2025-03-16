@@ -158,6 +158,14 @@ public:
         return v;
     }
 
+    static vector neg(vector v) noexcept
+    {
+        for (size_t i = 0; i < Len; ++i) {
+            v[i] = -v[i];
+        }
+        return v;
+    }
+
     // comparators
 
     friend bool operator==(vector a, vector b) noexcept
@@ -210,6 +218,11 @@ public:
     friend vector operator/(const vector& a, const data_t b) noexcept
     {
         return vector::div(a, b);
+    }
+
+    friend vector operator-(const vector& a) noexcept
+    {
+        return vector::neg(a);
     }
 
     static vector min(vector a, vector b) noexcept

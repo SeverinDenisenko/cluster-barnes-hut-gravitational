@@ -1,14 +1,11 @@
-#include <chrono>
 #include <cmath>
 #include <fstream>
-#include <functional>
 #include <random>
-#include <utility>
 #include <vector>
 
 #include "linalg.hpp"
 #include "logging.hpp"
-#include "tree.hpp"
+#include "solver.hpp"
 #include "types.hpp"
 
 using namespace bh;
@@ -19,24 +16,7 @@ int main()
 
     LOG_INFO("Starting standalone application...");
 
-    real dt = 0.01;
-    real t0 = 0.0;
-    real t  = 2 * M_PI;
-
-    struct point_t {
-        vec2 position {};
-        vec2 velosity {};
-        real mass {};
-    };
-
-    struct node_data_t {
-        real mass {};
-        vec2 mass_center {};
-    };
-
-    using nbody_quadree = quadtree<point_t, node_data_t>;
-
-    u32 n = 10000;
+    u32 n = 1'000;
 
     std::random_device rd;
     std::mt19937 e2(rd());
@@ -44,141 +24,42 @@ int main()
     std::uniform_real_distribution<real> distanse_dist(0.0f, 1.0f);
     std::uniform_real_distribution<real> mass_dist(0.0f, 1.0f);
 
-    std::vector<point_t> data;
+    std::vector<point_t> points;
 
     for (u32 i = 0; i < n; ++i) {
+    retry:
+
         real distanse = distanse_dist(e2);
         real angle    = angle_dist(e2);
 
         vec2 position = distanse * vec2 { cos(angle), sin(angle) };
-        vec2 velosity = vec2 { -sin(angle), cos(angle) } / n;
+        vec2 velosity = vec2 { -sin(angle), cos(angle) } / n / n;
         point_t point { .position = position, .velosity = velosity, .mass = mass_dist(e2) / n };
 
-        data.push_back(point);
-    }
+        if (distanse < 0.1) {
+            goto retry;
+        }
 
-    std::vector<point_t> data_copy = data;
+        points.push_back(point);
+    }
 
     LOG_INFO("Starting calculation...");
 
-    // Preallocate nodes
+    solver_params nbody_solver_params { .dt = 0.01, .t = 2 * M_PI, .thetha = 0.5 };
 
-    nbody_quadree tree = nbody_quadree::build(data);
+    solver nbody_solver { nbody_solver_params, points };
 
-    struct stats {
-        f32 point_hit {};
-        f32 node_hit {};
-    };
+    while (!nbody_solver.finished()) {
+        nbody_solver.step();
 
-    struct time_stats {
-        using clock = std::chrono::high_resolution_clock;
-
-        f32 tree_build_time {};
-        f32 acceleration_calculation_time {};
-    };
-
-    stats hit_stats {};
-    time_stats time_stats;
-
-    while (t0 < t) {
-        // Rebuild tree
-
-        auto now = time_stats::clock::now();
-
-        nbody_quadree::rebuild(tree);
-
-        // Compute node masses
-
-        tree.walk_leafs([](node_data_t& node, point_t point) { node.mass += point.mass; });
-
-        tree.walk_nodes([](node_data_t& parent, node_data_t& child) { parent.mass += child.mass; });
-
-        // Compute node mass centers
-
-        tree.walk_leafs([](node_data_t& node, point_t point) {
-            node.mass_center = point.position * point.mass + node.mass_center;
-        });
-
-        tree.walk_leafs(
-            [](node_data_t& node, [[maybe_unused]] point_t point) { node.mass_center = node.mass_center / node.mass; });
-
-        tree.walk_nodes([](node_data_t& parent, node_data_t& child) {
-            parent.mass_center = child.mass_center * child.mass + parent.mass_center;
-        });
-
-        tree.walk_nodes([](node_data_t& parent, [[maybe_unused]] node_data_t& child) {
-            parent.mass_center = parent.mass_center / parent.mass;
-        });
-
-        time_stats.tree_build_time
-            += std::chrono::duration_cast<std::chrono::milliseconds>(time_stats::clock::now() - now).count();
-        now = time_stats::clock::now();
-
-        // Make iteration
-
-        for (u32 i = 0; i < n; ++i) {
-            vec2 acceleration { 0.0f, 0.0f };
-
-            point_t& current = tree.get_point(i);
-
-            tree.reduce(
-                [&acceleration, &current, &hit_stats](node_data_t& node) {
-                    vec2 r       = current.position - node.mass_center;
-                    real len     = r.len();
-                    real r3      = len * len * len;
-                    acceleration = acceleration - r * node.mass / r3;
-
-                    hit_stats.node_hit += 1;
-                },
-                [&acceleration, &current, &hit_stats](point_t& point) {
-                    if (point.position == current.position) {
-                        return;
-                    }
-
-                    vec2 r       = current.position - point.position;
-                    real len     = r.len();
-                    real r3      = len * len * len;
-                    acceleration = acceleration - r * point.mass / r3;
-
-                    hit_stats.point_hit += 1;
-                },
-                [&data, i](nbody_quadree::axis_aligned_bounding_box aabb) -> bool {
-                    return (aabb.max - aabb.min).len() / (data[i].position - aabb.max).len() < 0.1;
-                });
-
-            data_copy[i].position = current.position + current.velosity * dt + acceleration * dt * dt / 2.0;
-            data_copy[i].velosity = current.velosity + acceleration * dt;
-        }
-
-        time_stats.acceleration_calculation_time
-            += std::chrono::duration_cast<std::chrono::milliseconds>(time_stats::clock::now() - now).count();
-        now = time_stats::clock::now();
-
-        std::swap(data, data_copy);
-
-        f32 summary_hits = hit_stats.point_hit + hit_stats.node_hit;
-        LOG_INFO(fmt::format(
-            "Stats: nodes={}, points_evaluations={:.1f}%, nodes_evaluations={:.1f}%",
-            tree.node_count(),
-            hit_stats.point_hit / summary_hits * 100.0,
-            hit_stats.node_hit / summary_hits * 100.0));
-
-        f32 summary_time = time_stats.tree_build_time + time_stats.acceleration_calculation_time;
-        LOG_INFO(fmt::format(
-            "Time stats: tree_build_time={:.1f}%, iteration_calculation_time={:.1f}%",
-            time_stats.tree_build_time / summary_time * 100.0,
-            time_stats.acceleration_calculation_time / summary_time * 100.0));
-
-        LOG_INFO(fmt::format("Done: {:.1f}%", (1.0 - (t - t0) / t) * 100.0));
-
-        t0 += dt;
+        LOG_INFO(fmt::format("Done: {:.1f}%", (nbody_solver.time() / nbody_solver_params.t) * 100.0));
     }
 
     LOG_INFO("Saving results...");
 
     std::ofstream results("data.txt");
     for (u32 i = 0; i < n; ++i) {
-        results << fmt::format("{:+.8f} {:+.8f} {:+.8f}\n", t0, data[i].position[0], data[i].position[1]);
+        results << fmt::format("{:+.8f} {:+.8f}\n", points[i].position[0], points[i].position[1]);
     }
 
     LOG_INFO("Exiting...");

@@ -20,8 +20,8 @@ with open("data.txt", "r") as f:
         if line.startswith("#"):
             continue
         sl = line.split()
-        x.append(float(sl[1]))
-        y.append(float(sl[2]))
+        x.append(float(sl[0]))
+        y.append(float(sl[1]))
     ax.plot(x, y, "o", markersize=0.4)
 
 plt.show()
