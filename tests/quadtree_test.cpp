@@ -187,19 +187,19 @@ TEST(QuadTreeTest, ReduceTest)
     u32 combined_sum = 0;
 
     tree.reduce(
-        []([[maybe_unused]] node& node) { return; },
-        [&points_sum](point& point) { points_sum += point.amout; },
-        []([[maybe_unused]] test_quadtree::axis_aligned_bounding_box aabb) -> bool { return false; });
+        []([[maybe_unused]] const node& node) { return; },
+        [&points_sum](const point& point) { points_sum += point.amout; },
+        []([[maybe_unused]] const test_quadtree::axis_aligned_bounding_box aabb) -> bool { return false; });
 
     tree.reduce(
-        [&nodes_sum](node& node) { nodes_sum += node.sum; },
-        []([[maybe_unused]] point& point) { return; },
-        []([[maybe_unused]] test_quadtree::axis_aligned_bounding_box aabb) -> bool { return true; });
+        [&nodes_sum](const node& node) { nodes_sum += node.sum; },
+        []([[maybe_unused]] const point& point) { return; },
+        []([[maybe_unused]] const test_quadtree::axis_aligned_bounding_box aabb) -> bool { return true; });
 
     tree.reduce(
-        [&combined_sum](node& node) { combined_sum += node.sum; },
-        [&combined_sum](point& point) { combined_sum += point.amout; },
-        []([[maybe_unused]] test_quadtree::axis_aligned_bounding_box aabb) -> bool { return rand() % 2; });
+        [&combined_sum](const node& node) { combined_sum += node.sum; },
+        [&combined_sum](const point& point) { combined_sum += point.amout; },
+        []([[maybe_unused]] const test_quadtree::axis_aligned_bounding_box aabb) -> bool { return rand() % 2; });
 
     EXPECT_EQ(nodes_sum, 4);
     EXPECT_EQ(points_sum, 4);

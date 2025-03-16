@@ -1,9 +1,12 @@
 #pragma once
 
+#include <algorithm>
+#include <mutex>
 #include <vector>
 
 #include "linalg.hpp"
 #include "model.hpp"
+#include "threadpool.hpp"
 #include "tree.hpp"
 
 namespace bh {
@@ -29,8 +32,56 @@ public:
 
     void step()
     {
-        real dt = params_.dt;
+        rebuild_tree();
 
+        for (u32 i = 0; i < points_.size(); ++i) {
+            model_body(i);
+        }
+
+        std::swap(points_, points_copy_);
+
+        t_ += params_.dt;
+    }
+
+    bool finished()
+    {
+        return t_ > params_.t;
+    }
+
+    real time()
+    {
+        return t_;
+    }
+
+private:
+    void model_body(u32 i)
+    {
+        vec2 acceleration { 0.0f, 0.0f };
+
+        const point_t& current = tree_.get_point(i);
+
+        tree_.reduce(
+            [&acceleration, &current](const node_t& node) {
+                acceleration = acceleration + compute_acceleration(current, node);
+            },
+            [&acceleration, &current](const point_t& point) {
+                if (point.position == current.position) {
+                    return;
+                }
+
+                acceleration = acceleration + compute_acceleration(current, point);
+            },
+            [this, i](quadree::axis_aligned_bounding_box aabb) -> bool {
+                return (aabb.max - aabb.min).len() / (points_[i].position - (aabb.max + aabb.min) / 2.0).len()
+                    < params_.thetha;
+            });
+
+        points_copy_[i].position = compute_position(current, acceleration, params_.dt);
+        points_copy_[i].velosity = compute_velosity(current, acceleration, params_.dt);
+    }
+
+    void rebuild_tree()
+    {
         quadree::rebuild(tree_);
 
         // Compute node masses
@@ -54,50 +105,8 @@ public:
         tree_.walk_nodes([](node_t& parent, [[maybe_unused]] node_t& child) {
             parent.mass_center = parent.mass_center / parent.mass;
         });
-
-        // Make iteration
-
-        for (u32 i = 0; i < points_.size(); ++i) {
-            vec2 acceleration { 0.0f, 0.0f };
-
-            point_t& current = tree_.get_point(i);
-
-            tree_.reduce(
-                [&acceleration, &current](node_t& node) {
-                    acceleration = acceleration + compute_acceleration(current, node);
-                },
-                [&acceleration, &current](point_t& point) {
-                    if (point.position == current.position) {
-                        return;
-                    }
-
-                    acceleration = acceleration + compute_acceleration(current, point);
-                },
-                [this, i](quadree::axis_aligned_bounding_box aabb) -> bool {
-                    return (aabb.max - aabb.min).len() / (points_[i].position - (aabb.max + aabb.min) / 2.0).len()
-                        < 0.5;
-                });
-
-            points_copy_[i].position = compute_position(current, acceleration, dt);
-            points_copy_[i].velosity = compute_velosity(current, acceleration, dt);
-        }
-
-        std::swap(points_, points_copy_);
-
-        t_ += dt;
     }
 
-    bool finished()
-    {
-        return t_ > params_.t;
-    }
-
-    real time()
-    {
-        return t_;
-    }
-
-private:
     std::vector<point_t>& points_;
     std::vector<point_t> points_copy_;
     solver_params params_;

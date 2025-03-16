@@ -77,12 +77,12 @@ public:
         return depth_;
     }
 
-    NodeData& get_node(u32 i)
+    const NodeData& get_node(u32 i) const
     {
         return nodes_[i].data;
     }
 
-    PositionalData& get_point(u32 i)
+    const PositionalData& get_point(u32 i) const
     {
         return points_[i];
     }
@@ -121,9 +121,9 @@ public:
     }
 
     void reduce(
-        std::function<void(NodeData&)> reduce_node,
-        std::function<void(PositionalData&)> reduce_point,
-        std::function<bool(axis_aligned_bounding_box aabb)> stop_condition)
+        std::function<void(const NodeData&)> reduce_node,
+        std::function<void(const PositionalData&)> reduce_point,
+        std::function<bool(const axis_aligned_bounding_box aabb)> stop_condition) const
     {
         reduce_impl(root_node_id, reduce_node, reduce_point, stop_condition);
     }
@@ -133,9 +133,9 @@ private:
 
     void reduce_impl(
         node_id_t current,
-        std::function<void(NodeData&)>& reduce_node,
-        std::function<void(PositionalData&)>& reduce_point,
-        std::function<bool(axis_aligned_bounding_box aabb)>& stop_condition)
+        std::function<void(const NodeData&)>& reduce_node,
+        std::function<void(const PositionalData&)>& reduce_point,
+        std::function<bool(const axis_aligned_bounding_box aabb)>& stop_condition) const
     {
         if (stop_condition(nodes_[current].box)) {
             reduce_node(nodes_[current].data);
@@ -187,7 +187,7 @@ private:
             null_child_node_id, null_child_node_id, null_child_node_id, null_child_node_id
         };
 
-        bool is_leaf()
+        bool is_leaf() const noexcept
         {
             return std::all_of(
                 std::begin(children), std::end(children), [](const node_id_t id) { return id == null_child_node_id; });
