@@ -8,9 +8,9 @@ struct cluster_message {
     u32 magic;
 };
 
-class transport {
+class cluster_transport {
 public:
-    transport() = default;
+    cluster_transport() = default;
 
     void send(cluster_message msg, u32 node);
     cluster_message receive(u32 node);

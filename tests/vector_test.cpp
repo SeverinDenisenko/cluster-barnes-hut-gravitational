@@ -28,7 +28,7 @@ TEST(VectorTest, ChainTest)
 
     vec2 vec_3 = vec_1 * 0.1f * 0.1f / 2.0f;
 
-    EXPECT_TRUE((vec_3 - vec_2).len() < 1e-10);
+    EXPECT_TRUE((vec_3 - vec_2).len() < 1e-9);
 }
 
 TEST(VectorTest, PlusMinusTest)

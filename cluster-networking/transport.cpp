@@ -4,12 +4,12 @@
 
 namespace bh {
 
-void transport::send(cluster_message msg, u32 node)
+void cluster_transport::send(cluster_message msg, u32 node)
 {
     MPI_Send(&msg, sizeof(cluster_message), MPI_BYTE, node, 0, MPI_COMM_WORLD);
 }
 
-cluster_message transport::receive(u32 node)
+cluster_message cluster_transport::receive(u32 node)
 {
     MPI_Status status;
     cluster_message result;

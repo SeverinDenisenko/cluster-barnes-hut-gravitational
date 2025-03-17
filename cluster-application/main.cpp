@@ -4,10 +4,11 @@
 
 using namespace bh;
 
-void master_main(node& node, transport& transport)
+void master_main(node& node)
 {
     LOG_INFO("Starting main application...");
 
+    cluster_transport transport;
     cluster_message request { .magic = node.node_index() };
 
     for (u32 i = 1; i < node.nodes_count(); ++i) {
@@ -21,10 +22,11 @@ void master_main(node& node, transport& transport)
     LOG_INFO("Exiting main application...");
 }
 
-void slave_main(node& node, transport& transport)
+void slave_main(node& node)
 {
     LOG_INFO("Starting slave application...");
 
+    cluster_transport transport;
     cluster_message response { .magic = node.node_index() };
 
     cluster_message msg = transport.receive(node.master_node_index());
@@ -41,12 +43,11 @@ int main(int argc, char** argv)
     setup_logging();
 
     node this_node(argc, argv);
-    transport transport;
 
     if (this_node.is_master()) {
-        master_main(this_node, transport);
+        master_main(this_node);
     } else {
-        slave_main(this_node, transport);
+        slave_main(this_node);
     }
 
     return 0;
