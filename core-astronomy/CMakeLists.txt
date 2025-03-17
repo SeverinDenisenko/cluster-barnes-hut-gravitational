@@ -1,4 +1,4 @@
-add_library(core-astronomy STATIC core_astronomy.cpp)
+add_library(core-astronomy STATIC generator.cpp)
 
 target_include_directories(core-astronomy PUBLIC include)
 target_link_libraries(core-astronomy PUBLIC core-math)
