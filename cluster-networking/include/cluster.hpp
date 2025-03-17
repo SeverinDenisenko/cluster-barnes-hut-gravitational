@@ -1,5 +1,7 @@
 #pragma once
 
+#include <numeric>
+
 #include "types.hpp"
 
 namespace bh {
@@ -8,6 +10,9 @@ class node {
 public:
     node(int argc, char** argv);
     ~node();
+
+    node(const node&) = delete;
+    node(node&&)      = delete;
 
     bool is_master() const noexcept
     {
@@ -27,6 +32,13 @@ public:
     u32 master_node_index() const noexcept
     {
         return 0;
+    }
+
+    array<u32> slaves_node_indexes() const noexcept
+    {
+        array<u32> slaves(nodes_count_ - 1);
+        std::iota(std::begin(slaves), std::end(slaves), 1);
+        return slaves;
     }
 
 private:

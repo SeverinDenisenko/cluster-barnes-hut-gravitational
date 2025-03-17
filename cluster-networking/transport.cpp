@@ -4,19 +4,27 @@
 
 namespace bh {
 
-void cluster_transport::send(cluster_message msg, u32 node)
+void cluster_transport::send(void* buff, u32 size, u32 node)
 {
-    MPI_Send(&msg, sizeof(cluster_message), MPI_BYTE, node, 0, MPI_COMM_WORLD);
+    MPI_Send(&buff, size, MPI_BYTE, node, 0, MPI_COMM_WORLD);
 }
 
-cluster_message cluster_transport::receive(u32 node)
+u32 cluster_transport::msg_size(u32 node)
 {
     MPI_Status status;
-    cluster_message result;
+    int buff_size;
 
-    MPI_Recv(&result, sizeof(cluster_message), MPI_BYTE, node, 0, MPI_COMM_WORLD, &status);
+    MPI_Probe(node, 0, MPI_COMM_WORLD, &status);
+    MPI_Get_count(&status, MPI_CHAR, &buff_size);
 
-    return result;
+    return buff_size;
+}
+
+void cluster_transport::receive(void* buff, u32 size, u32 node)
+{
+    MPI_Status status;
+
+    MPI_Recv(buff, size, MPI_BYTE, node, 0, MPI_COMM_WORLD, &status);
 }
 
 }

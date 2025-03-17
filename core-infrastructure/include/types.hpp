@@ -1,6 +1,8 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <vector>
 
 namespace bh {
 
@@ -17,5 +19,11 @@ using f64 = double;
 using f32 = float;
 
 using real = f32;
+
+template <typename T>
+using array = std::vector<T>;
+
+template <typename T, size_t Size>
+using static_array = std::array<T, Size>;
 
 }

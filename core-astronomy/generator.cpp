@@ -9,9 +9,9 @@ generator::generator(generator_params params)
 {
 }
 
-std::vector<point_t> generator::generate()
+array<point_t> generator::generate()
 {
-    std::vector<point_t> points;
+    array<point_t> points;
 
     std::random_device rand_dev;
     std::mt19937 rand_engine(rand_dev());

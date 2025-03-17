@@ -1,39 +1,42 @@
 #include "cluster.hpp"
+#include "ev_loop.hpp"
+#include "generator.hpp"
 #include "logging.hpp"
+#include "model.hpp"
 #include "transport.hpp"
 
 using namespace bh;
 
-void master_main(node& node)
+void master_main(ev_loop& loop, const node& node)
 {
     LOG_INFO("Starting main application...");
 
     cluster_transport transport;
-    cluster_message request { .magic = node.node_index() };
 
-    for (u32 i = 1; i < node.nodes_count(); ++i) {
-        transport.send(request, i);
+    array<point_t> points = generator { generator_params { .count = 1'000 } }.generate();
 
-        cluster_message response = transport.receive(i);
+    LOG_INFO(points.size());
 
-        LOG_INFO(response.magic);
+    for (u32 i : node.slaves_node_indexes()) {
+        transport.send(points, i);
     }
+
+    loop.stop();
 
     LOG_INFO("Exiting main application...");
 }
 
-void slave_main(node& node)
+void slave_main(ev_loop& loop, const node& node)
 {
     LOG_INFO("Starting slave application...");
 
     cluster_transport transport;
-    cluster_message response { .magic = node.node_index() };
 
-    cluster_message msg = transport.receive(node.master_node_index());
+    array<point_t> points = transport.receive<point_t>(node.master_node_index());
 
-    LOG_INFO(msg.magic);
+    LOG_INFO(points.size());
 
-    transport.send(response, node.master_node_index());
+    loop.stop();
 
     LOG_INFO("Exiting slave application...");
 }
@@ -44,11 +47,17 @@ int main(int argc, char** argv)
 
     node this_node(argc, argv);
 
-    if (this_node.is_master()) {
-        master_main(this_node);
-    } else {
-        slave_main(this_node);
-    }
+    ev_loop loop;
+
+    loop.start([&this_node, &loop]() {
+        if (this_node.is_master()) {
+            master_main(loop, this_node);
+        } else {
+            slave_main(loop, this_node);
+        }
+    });
+
+    loop.join();
 
     return 0;
 }

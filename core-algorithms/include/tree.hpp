@@ -15,7 +15,7 @@ template <typename PositionalData, typename NodeData>
 class quadtree {
 public:
     template <typename T>
-    using internal_container = std::vector<T>;
+    using internal_container = array<T>;
     template <typename T>
     using internal_interator = internal_container<T>::iterator;
 

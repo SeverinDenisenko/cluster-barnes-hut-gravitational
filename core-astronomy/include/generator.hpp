@@ -14,7 +14,7 @@ class generator {
 public:
     generator(generator_params params);
 
-    std::vector<point_t> generate();
+    array<point_t> generate();
 
 private:
     generator_params params_;
