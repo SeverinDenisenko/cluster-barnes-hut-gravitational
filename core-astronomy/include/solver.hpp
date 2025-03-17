@@ -1,12 +1,10 @@
 #pragma once
 
 #include <algorithm>
-#include <mutex>
 #include <vector>
 
 #include "linalg.hpp"
 #include "model.hpp"
-#include "threadpool.hpp"
 #include "tree.hpp"
 
 namespace bh {
