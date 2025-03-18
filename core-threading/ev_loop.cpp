@@ -1,4 +1,5 @@
 #include "ev_loop.hpp"
+#include "logging.hpp"
 
 namespace bh {
 
@@ -9,14 +10,18 @@ void ev_loop::start(task_t task)
     ev_loop_thread_ = std::thread([this, task = std::move(task)]() {
         std::unique_lock lock(init_mutex_);
 
-        while (!stop_.load()) {
-            if (task_queue_.empty()) {
-                continue;
-            } else {
-                task_t task = task_queue_.front();
-                task_queue_.pop();
-                task();
+        try {
+            while (!stop_.load()) {
+                if (task_queue_.empty()) {
+                    continue;
+                } else {
+                    task_t task = task_queue_.front();
+                    task_queue_.pop();
+                    task();
+                }
             }
+        } catch (const std::exception& ex) {
+            LOG_ERROR(ex.what());
         }
     });
 
@@ -41,6 +46,10 @@ void ev_loop::stop()
 
 void ev_loop::join()
 {
+    if (thread_id_ == std::this_thread::get_id()) {
+        throw std::runtime_error("Wrong thread id in ev_loop::join()!!!");
+    }
+
     ev_loop_thread_.join();
 }
 

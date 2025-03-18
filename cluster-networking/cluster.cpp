@@ -22,4 +22,9 @@ node::~node()
     MPI_Finalize();
 }
 
+void node::sync_cluster()
+{
+    MPI_Barrier(MPI_COMM_WORLD);
+}
+
 }

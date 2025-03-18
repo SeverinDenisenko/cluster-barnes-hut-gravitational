@@ -14,6 +14,8 @@ public:
     node(const node&) = delete;
     node(node&&)      = delete;
 
+    void sync_cluster();
+
     bool is_master() const noexcept
     {
         return is_master_;

@@ -1,6 +1,4 @@
-#include <cmath>
 #include <fstream>
-#include <random>
 #include <vector>
 
 #include "generator.hpp"

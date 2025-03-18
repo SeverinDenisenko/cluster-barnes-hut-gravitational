@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mpiexec -n 8 ./build/bin/cluster-application
+mpiexec -n 2 ./build/bin/cluster-application

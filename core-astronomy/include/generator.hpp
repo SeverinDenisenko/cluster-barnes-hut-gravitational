@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "model.hpp"
 
 namespace bh {
