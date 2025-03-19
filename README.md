@@ -58,8 +58,10 @@ generator:
 ```
 
 ```
-mpiexec --oversubscribe -n <number-of-cores-on-nodes> -host <master-node>,<slave-node-ip-1>,<slave-node-ip-2> ./build/bin/cluster-application
+mpiexec --oversubscribe -n <number-of-cores-on-all-nodes-plus-one> -host <master-node>,<slave-node-ip-1>,<slave-node-ip-2> ./build/bin/cluster-application
 ```
+
+Here we oversubscribe by one thread because master thread does almost no work.
 
 You also can run single-threaded executable (standalone-application):
 
@@ -70,7 +72,7 @@ You also can run single-threaded executable (standalone-application):
 # Benchmark results
 
 For 100k points (dt=0.01, t=2pi, theta=1):
-- Standalone application: 553.12s user 0.33s system 99% cpu 9:17.43 total
-- Cluster application (8 threads on one instance): 1551.35s user 5.28s system 705% cpu 3:40.79 total
+- Standalone application: 8:02.13
+- Cluster application (1 main thread + 8 slave threads): 2:39.65
 
 For 10M points (dt=0.01, t=2pi, theta=0.5) one iteration taking ~1:30.00
