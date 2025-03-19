@@ -1,6 +1,6 @@
 #include "cluster.hpp"
 
-#include <mpi.h>
+#include "mpi.hpp"
 
 namespace bh {
 

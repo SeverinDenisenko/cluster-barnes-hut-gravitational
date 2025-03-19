@@ -1,7 +1,8 @@
 #include "transport.hpp"
 
-#include <mpi.h>
 #include <utility>
+
+#include "mpi.hpp"
 
 namespace bh {
 
