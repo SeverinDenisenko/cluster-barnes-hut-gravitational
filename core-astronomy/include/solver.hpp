@@ -28,11 +28,47 @@ public:
     {
     }
 
+    void rebuild_tree()
+    {
+        quadree::rebuild(tree_);
+
+        // Compute node masses
+
+        tree_.walk_leafs([](node_t& node, point_t point) { node.mass += point.mass; });
+
+        tree_.walk_nodes([](node_t& parent, node_t& child) { parent.mass += child.mass; });
+
+        // Compute node mass centers
+
+        tree_.walk_leafs(
+            [](node_t& node, point_t point) { node.mass_center = point.position * point.mass + node.mass_center; });
+
+        tree_.walk_leafs(
+            [](node_t& node, [[maybe_unused]] point_t point) { node.mass_center = node.mass_center / node.mass; });
+
+        tree_.walk_nodes([](node_t& parent, node_t& child) {
+            parent.mass_center = child.mass_center * child.mass + parent.mass_center;
+        });
+
+        tree_.walk_nodes([](node_t& parent, [[maybe_unused]] node_t& child) {
+            parent.mass_center = parent.mass_center / parent.mass;
+        });
+    }
+
     void step()
     {
-        rebuild_tree();
-
         for (u32 i = 0; i < points_.size(); ++i) {
+            model_body(i);
+        }
+
+        std::swap(points_, points_copy_);
+
+        t_ += params_.dt;
+    }
+
+    void step(u32 begin, u32 end)
+    {
+        for (u32 i = begin; i < end; ++i) {
             model_body(i);
         }
 
@@ -76,33 +112,6 @@ private:
 
         points_copy_[i].position = compute_position(current, acceleration, params_.dt);
         points_copy_[i].velosity = compute_velosity(current, acceleration, params_.dt);
-    }
-
-    void rebuild_tree()
-    {
-        quadree::rebuild(tree_);
-
-        // Compute node masses
-
-        tree_.walk_leafs([](node_t& node, point_t point) { node.mass += point.mass; });
-
-        tree_.walk_nodes([](node_t& parent, node_t& child) { parent.mass += child.mass; });
-
-        // Compute node mass centers
-
-        tree_.walk_leafs(
-            [](node_t& node, point_t point) { node.mass_center = point.position * point.mass + node.mass_center; });
-
-        tree_.walk_leafs(
-            [](node_t& node, [[maybe_unused]] point_t point) { node.mass_center = node.mass_center / node.mass; });
-
-        tree_.walk_nodes([](node_t& parent, node_t& child) {
-            parent.mass_center = child.mass_center * child.mass + parent.mass_center;
-        });
-
-        tree_.walk_nodes([](node_t& parent, [[maybe_unused]] node_t& child) {
-            parent.mass_center = parent.mass_center / parent.mass;
-        });
     }
 
     array<point_t>& points_;

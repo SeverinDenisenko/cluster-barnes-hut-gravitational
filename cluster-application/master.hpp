@@ -1,7 +1,5 @@
 #pragma once
 
-#include <iterator>
-
 #include "chunks.hpp"
 #include "cluster.hpp"
 #include "ev_loop.hpp"
@@ -26,7 +24,10 @@ public:
     {
         LOG_INFO("Starting master application...");
 
-        ev_loop_.start([this]() { loop(); });
+        ev_loop_.start([this]() {
+            setup();
+            loop();
+        });
 
         ev_loop_.join();
 
@@ -34,13 +35,28 @@ public:
     }
 
 private:
+    void setup()
+    {
+        points_        = generator { generator_params { .count = 1'000'000 } }.generate();
+        solver_params_ = solver_params { .dt = 0.01f, .t = 2 * M_PI, .thetha = 1.0f };
+
+        send_parameters();
+        send_points();
+
+        nbody_solver_ = std::make_unique<solver>(solver_params_, points_);
+
+        send_chunks();
+    }
+
     void send_points()
     {
         for (u32 node : node_.slaves_node_indexes()) {
             transport_.send_array<point_t>(points_.begin(), points_.end(), node);
 
-            LOG_INFO(fmt::format("Send points: node={}, size={}", node, points_.size()));
+            LOG_TRACE(fmt::format("Send points: node={}, size={}", node, points_.size()));
         }
+
+        node_.sync_cluster();
     }
 
     void send_chunks()
@@ -54,6 +70,8 @@ private:
             LOG_INFO(fmt::format(
                 "Send chunk: node={}, begin={}, end={}", slaves_[i], working_chunks_[i].begin, working_chunks_[i].end));
         }
+
+        node_.sync_cluster();
     }
 
     void stop()
@@ -68,6 +86,8 @@ private:
 
             LOG_INFO(fmt::format("Send params: node={}", node));
         }
+
+        node_.sync_cluster();
     }
 
     void get_solutions()
@@ -76,35 +96,36 @@ private:
             transport_.receive_array<point_t>(
                 points_.begin() + working_chunks_[i].begin, points_.begin() + working_chunks_[i].end, slaves_[i]);
 
-            LOG_INFO(fmt::format(
+            LOG_TRACE(fmt::format(
                 "Got solutin: node={}, begin={}, end={}",
                 slaves_[i],
                 working_chunks_[i].begin,
                 working_chunks_[i].end));
         }
+
+        node_.sync_cluster();
     }
 
     void rebuild_tree()
     {
-        // todo
+        nbody_solver_->rebuild_tree();
     }
 
     void loop()
     {
-        points_ = generator { generator_params { .count = 1'000 } }.generate();
-
-        send_parameters();
-        send_points();
-        send_chunks();
-
         ev_loop_.push([this]() {
             get_solutions();
             rebuild_tree();
             send_points();
             loop();
 
-            // todo remove
-            stop();
+            nbody_solver_->step(0, 0);
+
+            LOG_INFO(fmt::format("Done: {:.1f}%", (nbody_solver_->time() / solver_params_.t) * 100.0));
+
+            if (nbody_solver_->finished()) {
+                stop();
+            }
         });
     }
 
@@ -115,6 +136,7 @@ private:
     array<u32> slaves_;
     array<chunk> working_chunks_;
     array<point_t> points_;
+    std::unique_ptr<solver> nbody_solver_;
 };
 
 }
