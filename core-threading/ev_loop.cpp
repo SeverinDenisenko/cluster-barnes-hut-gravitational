@@ -1,14 +1,12 @@
 #include "ev_loop.hpp"
 
-#include "logging.hpp"
-
 namespace bh {
 
 void ev_loop::start(task_t task)
 {
     std::unique_lock lock(init_mutex_);
 
-    ev_loop_thread_ = std::thread([this, task = std::move(task)]() {
+    ev_loop_thread_ = std::thread([this]() {
         std::unique_lock lock(init_mutex_);
 
         while (!stop_.load()) {
