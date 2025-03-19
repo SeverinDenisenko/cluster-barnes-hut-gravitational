@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <numeric>
+#include <cmath>
 
 namespace bh {
 
