@@ -24,8 +24,8 @@ array<point_t> generator::generate()
         real distanse = distanse_dist(rand_engine);
         real angle    = angle_dist(rand_engine);
 
-        vec2 position = distanse * vec2 { cos(angle), sin(angle) };
-        vec2 velosity = vec2 { -sin(angle), cos(angle) } / params_.count;
+        vec2 position = distanse * vec2 { std::cos(angle), std::sin(angle) };
+        vec2 velosity = vec2 { -std::sin(angle), std::cos(angle) } / params_.count;
         point_t point { .position = position, .velosity = velosity, .mass = mass_dist(rand_engine) / params_.count };
 
         points.push_back(point);
