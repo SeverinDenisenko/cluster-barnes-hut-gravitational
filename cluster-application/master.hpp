@@ -1,5 +1,7 @@
 #pragma once
 
+#include <yaml-cpp/yaml.h>
+
 #include "chunks.hpp"
 #include "cluster.hpp"
 #include "ev_loop.hpp"
@@ -37,8 +39,16 @@ public:
 private:
     void setup()
     {
-        points_        = generator { generator_params { .count = 100'000 } }.generate();
-        solver_params_ = solver_params { .t = 2 * M_PI, .dt = 0.01f, .thetha = 1.0f };
+        YAML::Node config = YAML::LoadFile("config.yaml");
+
+        real t     = config["solver"]["t"].as<real>();
+        real dt    = config["solver"]["dt"].as<real>();
+        real theta = config["solver"]["theta"].as<real>();
+
+        u32 count = config["generator"]["count"].as<u32>();
+
+        points_        = generator { generator_params { .count = count } }.generate();
+        solver_params_ = solver_params { .t = t, .dt = dt, .theta = theta };
 
         send_parameters();
         send_points();

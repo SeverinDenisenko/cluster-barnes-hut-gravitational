@@ -12,7 +12,7 @@ namespace bh {
 struct solver_params {
     real t;
     real dt;
-    real thetha;
+    real theta;
 };
 
 class solver {
@@ -107,7 +107,7 @@ private:
             },
             [this, i](quadree::axis_aligned_bounding_box aabb) -> bool {
                 return (aabb.max - aabb.min).len() / (points_[i].position - (aabb.max + aabb.min) / 2.0).len()
-                    < params_.thetha;
+                    < params_.theta;
             });
 
         points_copy_[i].position = compute_position(current, acceleration, params_.dt);

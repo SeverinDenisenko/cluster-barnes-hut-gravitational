@@ -1,6 +1,8 @@
 #include <fstream>
 #include <vector>
 
+#include <yaml-cpp/yaml.h>
+
 #include "generator.hpp"
 #include "logging.hpp"
 #include "model.hpp"
@@ -14,14 +16,22 @@ int main()
 
     LOG_INFO("Starting standalone application...");
 
-    generator_params params { .count = 100'000 };
+    YAML::Node config = YAML::LoadFile("config.yaml");
+
+    real t     = config["solver"]["t"].as<real>();
+    real dt    = config["solver"]["dt"].as<real>();
+    real theta = config["solver"]["theta"].as<real>();
+
+    u32 count = config["generator"]["count"].as<u32>();
+
+    generator_params params { .count = count };
     generator gen { params };
 
     std::vector<point_t> points = gen.generate();
 
     LOG_INFO("Starting calculation...");
 
-    solver_params nbody_solver_params { .t = 2 * M_PI, .dt = 0.01, .thetha = 1.0f };
+    solver_params nbody_solver_params { .t = t, .dt = dt, .theta = theta };
 
     solver nbody_solver { nbody_solver_params, points };
 

@@ -1,0 +1,6 @@
+solver:
+  t: 6.28
+  dt: 0.01
+  theta: 1.0
+generator:
+  count: 100000

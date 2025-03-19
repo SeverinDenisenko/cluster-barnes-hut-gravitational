@@ -46,8 +46,25 @@ ssh-copy-id mpiuser@<slave-node-ip-2>
 
 # Run cluster
 
+Look into config.yaml and set solver parameters:
+
+```
+solver:
+  t: 6.28
+  dt: 0.01
+  theta: 1.0
+generator:
+  count: 100000
+```
+
 ```
 mpiexec --oversubscribe -n <number-of-cores-on-nodes> -host <master-node>,<slave-node-ip-1>,<slave-node-ip-2> ./build/bin/cluster-application
+```
+
+You also can run single-threaded executable (standalone-application):
+
+```
+./build/bin/standalone-application
 ```
 
 # Benchmark results
