@@ -38,7 +38,7 @@ private:
     void setup()
     {
         points_        = generator { generator_params { .count = 100'000 } }.generate();
-        solver_params_ = solver_params { .dt = 0.01f, .t = 2 * M_PI, .thetha = 1.0f };
+        solver_params_ = solver_params { .t = 2 * M_PI, .dt = 0.01f, .thetha = 1.0f };
 
         send_parameters();
         send_points();

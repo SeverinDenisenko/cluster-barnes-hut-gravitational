@@ -14,14 +14,14 @@ int main()
 
     LOG_INFO("Starting standalone application...");
 
-    generator_params params { .count =  100'000 };
+    generator_params params { .count = 100'000 };
     generator gen { params };
 
     std::vector<point_t> points = gen.generate();
 
     LOG_INFO("Starting calculation...");
 
-    solver_params nbody_solver_params { .dt = 0.01, .t = 2 * M_PI, .thetha = 1.0f };
+    solver_params nbody_solver_params { .t = 2 * M_PI, .dt = 0.01, .thetha = 1.0f };
 
     solver nbody_solver { nbody_solver_params, points };
 
