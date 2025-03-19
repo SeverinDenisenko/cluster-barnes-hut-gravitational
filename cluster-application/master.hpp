@@ -37,7 +37,7 @@ public:
 private:
     void setup()
     {
-        points_        = generator { generator_params { .count = 1'000'000 } }.generate();
+        points_        = generator { generator_params { .count = 100'000 } }.generate();
         solver_params_ = solver_params { .dt = 0.01f, .t = 2 * M_PI, .thetha = 1.0f };
 
         send_parameters();
@@ -84,7 +84,7 @@ private:
         for (u32 node : node_.slaves_node_indexes()) {
             transport_.send_struct<solver_params>(solver_params_, node);
 
-            LOG_INFO(fmt::format("Send params: node={}", node));
+            LOG_TRACE(fmt::format("Send params: node={}", node));
         }
 
         node_.sync_cluster();

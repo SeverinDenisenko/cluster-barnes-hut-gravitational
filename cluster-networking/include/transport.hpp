@@ -4,7 +4,8 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "logging.hpp"
+#include "fmt/format.h"
+
 #include "types.hpp"
 
 namespace bh {

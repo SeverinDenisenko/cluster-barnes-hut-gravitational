@@ -14,7 +14,7 @@ int main()
 
     LOG_INFO("Starting standalone application...");
 
-    generator_params params { .count =  1'000'000 };
+    generator_params params { .count =  100'000 };
     generator gen { params };
 
     std::vector<point_t> points = gen.generate();

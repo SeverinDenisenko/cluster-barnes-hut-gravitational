@@ -21,7 +21,7 @@ inline array<chunk> make_chunks(u32 jobs, u32 workers)
         u32 additional = (worker < remainder) ? 1 : 0;
         u32 chunk_size = base_chunk_size + additional;
 
-        chunks[worker] = chunk { .begin = chunk_size * worker, .end = current + chunk_size };
+        chunks[worker] = chunk { .begin = current, .end = current + chunk_size };
 
         current += chunk_size;
     }
