@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en-US">
+    <head>
+        <meta charset="utf-8" />
+        <title>Cluster</title>
+        <style>
+            canvas {
+                border: 1px solid black;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="point-cloud" width="512" height="512"></canvas>
+        <script>
+            function putPoint(ctx, x, y) {
+                ctx.fillRect(x, y, 1, 1);
+            }
+
+            function draw() {
+                const canvas = document.getElementById("point-cloud");
+                const ctx = canvas.getContext("2d");
+
+                ctx.fillStyle = "rgb(0 0 0)";
+
+                putPoint(ctx, 10, 10);
+                putPoint(ctx, 11, 11);
+            }
+
+            window.addEventListener("load", draw);
+        </script>
+    </body>
+</html>

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <fstream>
-
 #include "chunks.hpp"
 #include "cluster.hpp"
 #include "ev_loop.hpp"
@@ -100,14 +98,6 @@ private:
         node_.sync_cluster();
     }
 
-    void write_results()
-    {
-        std::ofstream results("data.txt");
-        for (u32 i = 0; i < points_.size(); ++i) {
-            results << fmt::format("{:+.8f} {:+.8f}\n", points_[i].position[0], points_[i].position[1]);
-        }
-    }
-
     void stop()
     {
         ev_loop_.stop();
@@ -129,7 +119,6 @@ private:
             loop();
 
             if (nbody_solver_->finished()) {
-                write_results();
                 stop();
             }
         });

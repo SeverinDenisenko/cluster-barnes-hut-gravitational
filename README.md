@@ -63,16 +63,15 @@ mpiexec --oversubscribe -n <number-of-cores-on-all-nodes-plus-one> -host <master
 
 Here we oversubscribe by one thread because master thread does almost no work.
 
-You also can run single-threaded executable (standalone-application):
-
-```
-./build/bin/standalone-application
-```
-
 # Benchmark results
 
 For 100k points (dt=0.01, t=2pi, theta=1):
-- Standalone application: 8:02.13
 - Cluster application (1 main thread + 8 slave threads): 2:39.65
 
 For 10M points (dt=0.01, t=2pi, theta=0.5) one iteration taking ~1:30.00
+
+Todo
+- Fix problem with MPI backends
+- Optimize cluster communication
+- Optimize tree reduction
+- Make interactive frontend

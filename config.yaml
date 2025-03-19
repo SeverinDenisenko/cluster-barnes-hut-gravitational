@@ -1,6 +1,11 @@
 solver:
-  t: 6.28
-  dt: 0.01
-  theta: 1.0
+  t: 100
+  dt: 0.001
+  theta: 0.5
 generator:
-  count: 100000
+  count: 100
+  min_mass: 0.1
+  max_mass: 0.1
+  max_distance: 100.0
+  min_velocity: 0.1
+  max_velocity: 0.1

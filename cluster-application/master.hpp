@@ -41,14 +41,18 @@ private:
     {
         YAML::Node config = YAML::LoadFile("config.yaml");
 
-        real t     = config["solver"]["t"].as<real>();
-        real dt    = config["solver"]["dt"].as<real>();
-        real theta = config["solver"]["theta"].as<real>();
+        generator_params generator_params { .count        = config["generator"]["count"].as<u32>(),
+                                            .min_mass     = config["generator"]["min_mass"].as<real>(),
+                                            .max_mass     = config["generator"]["max_mass"].as<real>(),
+                                            .max_distance = config["generator"]["max_distance"].as<real>(),
+                                            .min_velocity = config["generator"]["min_velocity"].as<real>(),
+                                            .max_velocity = config["generator"]["max_velocity"].as<real>() };
 
-        u32 count = config["generator"]["count"].as<u32>();
+        points_ = generator { generator_params }.generate();
 
-        points_        = generator { generator_params { .count = count } }.generate();
-        solver_params_ = solver_params { .t = t, .dt = dt, .theta = theta };
+        solver_params_ = solver_params { .t     = config["solver"]["t"].as<real>(),
+                                         .dt    = config["solver"]["dt"].as<real>(),
+                                         .theta = config["solver"]["theta"].as<real>() };
 
         send_parameters();
         send_points();

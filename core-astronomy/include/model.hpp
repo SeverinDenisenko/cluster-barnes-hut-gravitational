@@ -8,6 +8,7 @@ namespace bh {
 struct point_t {
     vec2 position {};
     vec2 velosity {};
+    vec2 acceleration {};
     real mass {};
 };
 
@@ -19,8 +20,8 @@ struct node_t {
 inline vec2 compute_acceleration(const point_t& a, const point_t& b)
 {
     vec2 r   = a.position - b.position;
-    real len = std::max(r.len(), 0.001f);
-    real r3  = len * len * len;
+    real len = r.len();
+    real r3 = len * len * len;
     return -r * b.mass / r3;
 }
 
@@ -32,14 +33,12 @@ inline vec2 compute_acceleration(const point_t& a, const node_t& n)
     return -r * n.mass / r3;
 }
 
-inline vec2 compute_position(const point_t& a, vec2 acceleration, real dt)
+inline point_t integrator_step(point_t p, vec2 acceleration, real dt)
 {
-    return a.position + a.velosity * dt + acceleration * dt * dt / 2.0;
-}
-
-inline vec2 compute_velosity(const point_t& a, vec2 acceleration, real dt)
-{
-    return a.velosity + acceleration * dt;
+    p.position     = p.position + p.velosity * dt + 0.5_r * p.acceleration * dt * dt;
+    p.velosity     = p.velosity + 0.5_r * (acceleration + p.acceleration) * dt;
+    p.acceleration = acceleration;
+    return p;
 }
 
 }

@@ -24,7 +24,7 @@ public:
         , points_copy_(points_)
         , params_(params)
         , tree_(quadree::build(points_))
-        , t_(0.0f)
+        , t_(0.0_r)
     {
     }
 
@@ -90,9 +90,9 @@ public:
 private:
     void model_body(u32 i)
     {
-        vec2 acceleration { 0.0f, 0.0f };
+        vec2 acceleration { 0.0_r, 0.0_r };
 
-        const point_t& current = tree_.get_point(i);
+        point_t current = tree_.get_point(i);
 
         tree_.reduce(
             [&acceleration, &current](const node_t& node) {
@@ -110,8 +110,7 @@ private:
                     < params_.theta;
             });
 
-        points_copy_[i].position = compute_position(current, acceleration, params_.dt);
-        points_copy_[i].velosity = compute_velosity(current, acceleration, params_.dt);
+        points_copy_[i] = integrator_step(current, acceleration, params_.dt);
     }
 
     array<point_t>& points_;

@@ -18,7 +18,12 @@ using i64 = std::int64_t;
 using f64 = double;
 using f32 = float;
 
-using real = f32;
+using real = f64;
+
+inline real operator""_r(long double d)
+{
+    return static_cast<real>(d);
+}
 
 template <typename T>
 using array = std::vector<T>;
