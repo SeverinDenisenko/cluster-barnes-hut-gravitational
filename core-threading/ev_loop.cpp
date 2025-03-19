@@ -1,4 +1,5 @@
 #include "ev_loop.hpp"
+
 #include "logging.hpp"
 
 namespace bh {
@@ -22,6 +23,7 @@ void ev_loop::start(task_t task)
             }
         } catch (const std::exception& ex) {
             LOG_ERROR(ex.what());
+            LOG_ERROR(stacktrace());
         }
     });
 

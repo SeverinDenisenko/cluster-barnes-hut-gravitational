@@ -11,4 +11,6 @@ namespace bh {
 
 void setup_logging();
 
+std::string stacktrace();
+
 }
