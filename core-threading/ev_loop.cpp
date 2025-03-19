@@ -11,19 +11,14 @@ void ev_loop::start(task_t task)
     ev_loop_thread_ = std::thread([this, task = std::move(task)]() {
         std::unique_lock lock(init_mutex_);
 
-        try {
-            while (!stop_.load()) {
-                if (task_queue_.empty()) {
-                    continue;
-                } else {
-                    task_t task = task_queue_.front();
-                    task_queue_.pop();
-                    task();
-                }
+        while (!stop_.load()) {
+            if (task_queue_.empty()) {
+                continue;
+            } else {
+                task_t task = task_queue_.front();
+                task_queue_.pop();
+                task();
             }
-        } catch (const std::exception& ex) {
-            LOG_ERROR(ex.what());
-            LOG_ERROR(stacktrace());
         }
     });
 
