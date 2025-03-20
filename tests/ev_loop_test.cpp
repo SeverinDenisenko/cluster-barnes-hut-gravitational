@@ -8,19 +8,7 @@ TEST(EvLoopTest, StartStopTest)
 {
     ev_loop loop;
 
-    loop.start([]() { });
-
-    loop.stop();
-    loop.join();
-}
-
-TEST(EvLoopTest, StartStopInternalTest)
-{
-    ev_loop loop;
-
     loop.start([&loop]() { loop.stop(); });
-
-    loop.join();
 }
 
 TEST(EvLoopTest, PutTaskTest)
@@ -28,8 +16,6 @@ TEST(EvLoopTest, PutTaskTest)
     ev_loop loop;
 
     loop.start([&loop]() { loop.push([&loop]() { loop.stop(); }); });
-
-    loop.join();
 }
 
 void count(ev_loop& loop, int counter)
@@ -50,8 +36,6 @@ TEST(EvLoopTest, CounterTest)
     loop.start([&loop]() { //
         count(loop, 10);
     });
-
-    loop.join();
 }
 
 }

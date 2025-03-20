@@ -1,6 +1,12 @@
 add_executable(cluster-application main.cpp)
 
-target_link_libraries(cluster-application PRIVATE core-astronomy core-threading cluster-networking)
+target_link_libraries(cluster-application PRIVATE core-astronomy core-threading cluster-networking raylib)
+
+if (APPLE)
+    target_link_libraries(cluster-application PRIVATE "-framework IOKit")
+    target_link_libraries(cluster-application PRIVATE "-framework Cocoa")
+    target_link_libraries(cluster-application PRIVATE "-framework OpenGL")
+endif()
 
 if(MSVC)
     target_compile_options(cluster-application PRIVATE /W4 /WX)

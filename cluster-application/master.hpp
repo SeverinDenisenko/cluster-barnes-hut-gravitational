@@ -5,6 +5,7 @@
 #include "chunks.hpp"
 #include "cluster.hpp"
 #include "ev_loop.hpp"
+#include "frontend.hpp"
 #include "generator.hpp"
 #include "logging.hpp"
 #include "model.hpp"
@@ -19,6 +20,7 @@ public:
     master_node(node& node, cluster_transport& transport)
         : node_(node)
         , transport_(transport)
+        , frontend_(points_)
     {
     }
 
@@ -31,19 +33,21 @@ public:
             loop();
         });
 
-        ev_loop_.join();
-
         LOG_INFO("Exiting master application...");
     }
 
 private:
     void setup()
     {
+        frontend_.open();
+
         YAML::Node config = YAML::LoadFile("config.yaml");
 
         generator_params generator_params { .count        = config["generator"]["count"].as<u32>(),
                                             .min_mass     = config["generator"]["min_mass"].as<real>(),
                                             .max_mass     = config["generator"]["max_mass"].as<real>(),
+                                            .power_mass   = config["generator"]["power_mass"].as<real>(),
+                                            .scale_mass   = config["generator"]["scale_mass"].as<real>(),
                                             .max_distance = config["generator"]["max_distance"].as<real>(),
                                             .min_velocity = config["generator"]["min_velocity"].as<real>(),
                                             .max_velocity = config["generator"]["max_velocity"].as<real>() };
@@ -129,6 +133,7 @@ private:
     {
         ev_loop_.push([this]() {
             get_solutions();
+            frontend_.update();
             rebuild_tree();
             send_points();
             loop();
@@ -138,6 +143,7 @@ private:
             LOG_INFO(fmt::format("Done: {:.1f}%", (nbody_solver_->time() / solver_params_.t) * 100.0));
 
             if (nbody_solver_->finished()) {
+                frontend_.close();
                 stop();
             }
         });
@@ -146,6 +152,7 @@ private:
     node& node_;
     cluster_transport& transport_;
     ev_loop ev_loop_;
+    frontend frontend_;
     solver_params solver_params_;
     array<u32> slaves_;
     array<chunk> working_chunks_;

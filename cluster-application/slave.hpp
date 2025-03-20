@@ -29,8 +29,6 @@ public:
             loop();
         });
 
-        ev_loop_.join();
-
         LOG_INFO("Exiting slave application...");
     }
 

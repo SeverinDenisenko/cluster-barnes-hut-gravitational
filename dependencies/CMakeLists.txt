@@ -8,3 +8,5 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/spdlog)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/googletest)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/backward-cpp)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/raylib)
