@@ -7,8 +7,26 @@ Solver for gravitational n-body problem using parallel distributed Barnes-Hut al
 For Ubuntu install packages:
 
 ```
-sudo apt install cmake g++ mpich binutils-dev openssh-server net-tools
+sudo apt install cmake g++ binutils-dev openssh-server net-tools
 ```
+
+Select one of the MPI implementations:
+
+```
+sudo apt install libopenmpi-dev openmpi-bin
+sudo apt install mpich
+```
+
+For openmpi on Fedora run:
+
+```
+sudo dnf install openmpi openmpi-devel
+source /etc/profile.d/modules.sh
+module load mpi/openmpi-x86_64
+```
+
+Then build:
+
 
 ```
 git clone --recurse-submodules https://github.com/SeverinDenisenko/cluster-barnes-hut-gravitational.git
@@ -18,12 +36,6 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j 8
 cd ..
-```
-
-If you have any problem with project configuration, delete all other MPI implemetations:
-
-```
-sudo apt remove libopenmpi-dev openmpi-bin
 ```
 
 # Configure cluster
@@ -46,16 +58,7 @@ ssh-copy-id mpiuser@<slave-node-ip-2>
 
 # Run cluster
 
-Look into config.yaml and set solver parameters:
-
-```
-solver:
-  t: 6.28
-  dt: 0.01
-  theta: 1.0
-generator:
-  count: 100000
-```
+Look into config.yaml and set solver parameters.
 
 ```
 mpiexec --oversubscribe -n <number-of-cores-on-all-nodes-plus-one> -host <master-node>,<slave-node-ip-1>,<slave-node-ip-2> ./build/bin/cluster-application
@@ -71,7 +74,6 @@ For 100k points (dt=0.01, t=2pi, theta=1):
 For 10M points (dt=0.01, t=2pi, theta=0.5) one iteration taking ~1:30.00
 
 Todo
-- Fix problem with MPI backends
 - Optimize cluster communication
 - Optimize tree reduction
 - Make interactive frontend
