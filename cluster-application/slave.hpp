@@ -3,7 +3,6 @@
 #include "chunks.hpp"
 #include "cluster.hpp"
 #include "ev_loop.hpp"
-#include "logging.hpp"
 #include "model.hpp"
 #include "solver.hpp"
 #include "transport.hpp"
@@ -13,114 +12,30 @@ namespace bh {
 
 class slave_node {
 public:
-    slave_node(node& node, cluster_transport& transport)
-        : node_(node)
-        , transport_(transport)
-        , ev_loop_()
-    {
-    }
+    slave_node(node& node, cluster_transport& transport);
 
-    void start()
-    {
-        LOG_INFO("Starting slave application...");
-
-        ev_loop_.start([this]() {
-            setup();
-            loop();
-        });
-
-        LOG_INFO("Exiting slave application...");
-    }
+    void start();
 
 private:
-    void setup()
-    {
-        get_parameters();
-        get_points();
+    void setup();
 
-        nbody_solver_ = std::make_unique<solver>(solver_params_, points_);
+    void get_points();
 
-        get_chunk();
-    }
+    void update_points();
 
-    void get_points()
-    {
-        points_ = transport_.receive_array<point_t>(node_.master_node_index());
+    void get_chunk();
 
-        LOG_TRACE(fmt::format("[node: {}] Got points: size={}", node_.node_index(), points_.size()));
+    void solve();
 
-        node_.sync_cluster();
-    }
+    void send_solution();
 
-    void update_points()
-    {
-        transport_.receive_array<point_t>(points_.begin(), points_.end(), node_.master_node_index());
+    void get_parameters();
 
-        LOG_TRACE(fmt::format("[node: {}] Updated points: size={}", node_.node_index(), points_.size()));
+    void stop();
 
-        node_.sync_cluster();
-    }
+    void rebuild_tree();
 
-    void get_chunk()
-    {
-        working_chunk_ = transport_.receive_struct<chunk>(node_.master_node_index());
-
-        LOG_INFO(fmt::format(
-            "[node: {}] Got chunk: begin={}, end={}", node_.node_index(), working_chunk_.begin, working_chunk_.end));
-
-        node_.sync_cluster();
-    }
-
-    void solve()
-    {
-        nbody_solver_->step(working_chunk_.begin, working_chunk_.end);
-    }
-
-    void send_solution()
-    {
-        transport_.send_array<point_t>(
-            points_.begin() + working_chunk_.begin, points_.begin() + working_chunk_.end, node_.master_node_index());
-
-        LOG_TRACE(fmt::format(
-            "[node: {}] Send solutin: begin={}, end={}", node_.node_index(), working_chunk_.begin, working_chunk_.end));
-
-        node_.sync_cluster();
-    }
-
-    void get_parameters()
-    {
-        solver_params_ = transport_.receive_struct<solver_params>(node_.master_node_index());
-
-        LOG_TRACE(fmt::format("[node: {}] Got params", node_.node_index()));
-
-        node_.sync_cluster();
-    }
-
-    void stop()
-    {
-        ev_loop_.stop();
-    }
-
-    void rebuild_tree()
-    {
-        nbody_solver_->rebuild_tree();
-    }
-
-    void loop()
-    {
-        ev_loop_.push([this]() {
-            solve();
-            send_solution();
-            update_points();
-            rebuild_tree();
-
-            loop();
-
-            if (nbody_solver_->finished()) {
-                stop();
-            }
-        });
-    }
+    void loop();
 
     node& node_;
     cluster_transport& transport_;

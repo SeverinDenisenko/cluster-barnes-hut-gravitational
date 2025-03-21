@@ -28,20 +28,20 @@ array<point_t> generator::generate()
     std::random_device rand_dev;
     std::mt19937 rand_engine(rand_dev());
     std::uniform_real_distribution<real> angle_dist(0.0_r, 2.0_r * M_PI);
-    std::uniform_real_distribution<real> position_dist(-params_.max_distance, params_.max_distance);
-    std::uniform_real_distribution<real> velocity_dist(params_.min_velocity, params_.max_velocity);
+    std::uniform_real_distribution<real> position_dist(0, params_.max_distance);
 
     for (u32 i = 0; i < params_.count; ++i) {
         real angle = angle_dist(rand_engine);
 
-        vec2 position = vec2 { position_dist(rand_engine), position_dist(rand_engine) };
-        vec2 velosity = vec2 { std::cos(angle), std::sin(angle) } * velocity_dist(rand_engine);
+        real r        = position_dist(rand_engine);
+        vec2 position = vec2 { std::cos(angle), std::sin(angle) } * r;
+        real mass     = power_distribution(params_.min_mass, params_.max_mass, params_.power_mass) * params_.scale_mass;
 
-        point_t point { .position     = position,
-                        .velosity     = velosity,
-                        .acceleration = vec2 { 0.0_r, 0.0_r },
-                        .mass         = power_distribution(params_.min_mass, params_.max_mass, params_.power_mass)
-                            * params_.scale_mass };
+        real v = r * params_.scale_velocity;
+
+        vec2 velosity = vec2 { -std::sin(angle), std::cos(angle) } * v;
+
+        point_t point { .position = position, .velosity = velosity, .mass = mass };
 
         points.push_back(point);
     }

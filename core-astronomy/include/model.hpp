@@ -17,11 +17,11 @@ struct node_t {
     vec2 mass_center {};
 };
 
-inline vec2 compute_acceleration(const point_t& a, const point_t& b)
+inline vec2 compute_acceleration(const point_t& a, const point_t& b, real epsilon)
 {
     vec2 r   = a.position - b.position;
-    real len = r.len();
-    real r3 = len * len * len;
+    real len = r.len() + epsilon;
+    real r3  = len * len * len;
     return -r * b.mass / r3;
 }
 

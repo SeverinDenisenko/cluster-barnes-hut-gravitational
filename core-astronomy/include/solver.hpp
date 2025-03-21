@@ -13,6 +13,7 @@ struct solver_params {
     real t;
     real dt;
     real theta;
+    real epsilon;
 };
 
 class solver {
@@ -98,12 +99,12 @@ private:
             [&acceleration, &current](const node_t& node) {
                 acceleration = acceleration + compute_acceleration(current, node);
             },
-            [&acceleration, &current](const point_t& point) {
+            [this, &acceleration, &current](const point_t& point) {
                 if (point.position == current.position) {
                     return;
                 }
 
-                acceleration = acceleration + compute_acceleration(current, point);
+                acceleration = acceleration + compute_acceleration(current, point, params_.epsilon);
             },
             [this, i](quadree::axis_aligned_bounding_box aabb) -> bool {
                 return (aabb.max - aabb.min).len() / (points_[i].position - (aabb.max + aabb.min) / 2.0).len()

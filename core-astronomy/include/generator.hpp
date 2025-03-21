@@ -11,8 +11,7 @@ struct generator_params {
     real power_mass;
     real scale_mass;
     real max_distance;
-    real min_velocity;
-    real max_velocity;
+    real scale_velocity;
 };
 
 class generator {
