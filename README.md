@@ -76,4 +76,3 @@ For 10M points (dt=0.01, t=2pi, theta=0.5) one iteration taking ~1:30.00
 Todo
 - Optimize cluster communication
 - Optimize tree reduction
-- Make interactive frontend
