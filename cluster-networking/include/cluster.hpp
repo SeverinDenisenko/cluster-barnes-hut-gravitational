@@ -14,11 +14,22 @@ public:
     node(const node&) = delete;
     node(node&&)      = delete;
 
-    void sync_cluster();
-
     bool is_master() const noexcept
     {
-        return is_master_;
+        if (node_index_ == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    bool is_frontend() const noexcept
+    {
+        if (node_index_ == 1) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     u32 nodes_count() const noexcept
@@ -36,17 +47,21 @@ public:
         return 0;
     }
 
+    u32 frontend_node_index() const noexcept
+    {
+        return 1;
+    }
+
     array<u32> slaves_node_indexes() const noexcept
     {
-        array<u32> slaves(nodes_count_ - 1);
-        std::iota(std::begin(slaves), std::end(slaves), 1);
+        array<u32> slaves(nodes_count_ - 2);
+        std::iota(std::begin(slaves), std::end(slaves), 2);
         return slaves;
     }
 
 private:
     int node_index_;
     int nodes_count_;
-    bool is_master_;
 };
 
 }

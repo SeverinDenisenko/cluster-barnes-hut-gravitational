@@ -14,6 +14,9 @@ class cluster_transport {
 public:
     cluster_transport() = default;
 
+    cluster_transport(const cluster_transport&) = delete;
+    cluster_transport(cluster_transport&&)      = delete;
+
     template <typename T>
         requires(std::is_trivially_copyable_v<T>)
     void send_struct(T msg, u32 node)

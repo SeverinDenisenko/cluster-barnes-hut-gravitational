@@ -42,6 +42,7 @@ private:
     ev_loop ev_loop_;
     solver_params solver_params_;
     array<point_t> points_;
+    array<point_t> points_copy_;
     chunk working_chunk_;
     std::unique_ptr<solver> nbody_solver_;
 };

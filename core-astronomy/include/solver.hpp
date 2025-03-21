@@ -20,9 +20,9 @@ class solver {
 public:
     using quadree = quadtree<point_t, node_t>;
 
-    solver(solver_params params, array<point_t>& points)
+    solver(solver_params params, array<point_t>& points, array<point_t>& points_copy)
         : points_(points)
-        , points_copy_(points_)
+        , points_copy_(points_copy)
         , params_(params)
         , tree_(quadree::build(points_))
         , t_(0.0_r)
@@ -115,7 +115,7 @@ private:
     }
 
     array<point_t>& points_;
-    array<point_t> points_copy_;
+    array<point_t>& points_copy_;
     solver_params params_;
     quadree tree_;
     real t_;

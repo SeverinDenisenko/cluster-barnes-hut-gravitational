@@ -16,5 +16,6 @@ generator:
   scale_velocity: 0.5
 frontend:
   enable: true
+  refresh_every: 2
 output:
   enable: true

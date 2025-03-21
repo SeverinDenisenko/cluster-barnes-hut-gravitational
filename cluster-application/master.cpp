@@ -7,7 +7,6 @@
 #include "chunks.hpp"
 #include "cluster.hpp"
 #include "ev_loop.hpp"
-#include "frontend.hpp"
 #include "generator.hpp"
 #include "logging.hpp"
 #include "model.hpp"
@@ -20,7 +19,6 @@ namespace bh {
 master_node::master_node(node& node, cluster_transport& transport)
     : node_(node)
     , transport_(transport)
-    , frontend_(points_)
 {
 }
 
@@ -40,12 +38,11 @@ void master_node::setup()
 {
     YAML::Node config = YAML::LoadFile("config.yaml");
 
-    enable_frontend_ = config["frontend"]["enable"].as<bool>();
-    enable_output_   = config["output"]["enable"].as<bool>();
+    enable_frontend_          = config["frontend"]["enable"].as<bool>();
+    frontend_refresh_every_   = config["frontend"]["refresh_every"].as<u32>();
+    frontend_refresh_counter_ = 0;
 
-    if (enable_frontend_) {
-        frontend_.open();
-    }
+    enable_output_ = config["output"]["enable"].as<bool>();
 
     generator_params generator_params { .count          = config["generator"]["count"].as<u32>(),
                                         .min_mass       = config["generator"]["min_mass"].as<real>(),
@@ -55,17 +52,19 @@ void master_node::setup()
                                         .max_distance   = config["generator"]["max_distance"].as<real>(),
                                         .scale_velocity = config["generator"]["scale_velocity"].as<real>() };
 
-    points_ = generator { generator_params }.generate();
-
     solver_params_ = solver_params { .t       = config["solver"]["t"].as<real>(),
                                      .dt      = config["solver"]["dt"].as<real>(),
                                      .theta   = config["solver"]["theta"].as<real>(),
                                      .epsilon = config["solver"]["epsilon"].as<real>() };
 
+    points_      = generator { generator_params }.generate();
+    points_copy_ = points_;
+
     send_parameters();
     send_points();
+    send_to_frontend();
 
-    nbody_solver_ = std::make_unique<solver>(solver_params_, points_);
+    nbody_solver_ = std::make_unique<solver>(solver_params_, points_, points_copy_);
 
     send_chunks();
 }
@@ -77,8 +76,6 @@ void master_node::send_points()
 
         LOG_TRACE(fmt::format("Send points: node={}, size={}", node, points_.size()));
     }
-
-    node_.sync_cluster();
 }
 
 void master_node::send_chunks()
@@ -92,8 +89,6 @@ void master_node::send_chunks()
         LOG_INFO(fmt::format(
             "Send chunk: node={}, begin={}, end={}", slaves_[i], working_chunks_[i].begin, working_chunks_[i].end));
     }
-
-    node_.sync_cluster();
 }
 
 void master_node::stop()
@@ -109,7 +104,9 @@ void master_node::send_parameters()
         LOG_TRACE(fmt::format("Send params: node={}", node));
     }
 
-    node_.sync_cluster();
+    if (enable_frontend_) {
+        transport_.send_struct<solver_params>(solver_params_, node_.frontend_node_index());
+    }
 }
 
 void master_node::get_solutions()
@@ -121,8 +118,6 @@ void master_node::get_solutions()
         LOG_TRACE(fmt::format(
             "Got solutin: node={}, begin={}, end={}", slaves_[i], working_chunks_[i].begin, working_chunks_[i].end));
     }
-
-    node_.sync_cluster();
 }
 
 void master_node::rebuild_tree()
@@ -139,28 +134,33 @@ void master_node::write_results()
     }
 }
 
+void master_node::send_to_frontend()
+{
+    transport_.send_array<point_t>(points_.begin(), points_.end(), node_.frontend_node_index());
+}
+
 void master_node::loop()
 {
     ev_loop_.push([this]() {
         get_solutions();
-        if (enable_frontend_) {
-            frontend_.update();
-        }
         rebuild_tree();
         send_points();
-        loop();
 
         nbody_solver_->step(0, 0);
 
+        if (enable_frontend_ && frontend_refresh_counter_ % frontend_refresh_every_ == 0) {
+            send_to_frontend();
+        }
+        frontend_refresh_counter_++;
+
         if (nbody_solver_->finished()) {
-            if (enable_frontend_) {
-                frontend_.close();
-            }
             if (enable_output_) {
                 write_results();
             }
             stop();
         }
+
+        loop();
     });
 }
 

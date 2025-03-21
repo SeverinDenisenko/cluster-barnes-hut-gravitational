@@ -61,10 +61,10 @@ ssh-copy-id mpiuser@<slave-node-ip-2>
 Look into config.yaml and set solver parameters.
 
 ```
-mpiexec --oversubscribe -n <number-of-cores-on-all-nodes-plus-one> -host <master-node>,<slave-node-ip-1>,<slave-node-ip-2> ./build/bin/cluster-application
+mpiexec --oversubscribe -n <number-of-cores-on-all-nodes-plus-two> -host <master-node>,<slave-node-ip-1>,<slave-node-ip-2> ./build/bin/cluster-application
 ```
 
-Here we oversubscribe by one thread because master thread does almost no work.
+Here we oversubscribe by two threads because master thread and frontend does almost no work.
 
 # Benchmark results
 

@@ -35,7 +35,7 @@ void slave_node::setup()
     get_parameters();
     get_points();
 
-    nbody_solver_ = std::make_unique<solver>(solver_params_, points_);
+    nbody_solver_ = std::make_unique<solver>(solver_params_, points_, points_copy_);
 
     get_chunk();
 }
@@ -43,10 +43,9 @@ void slave_node::setup()
 void slave_node::get_points()
 {
     points_ = transport_.receive_array<point_t>(node_.master_node_index());
+    points_copy_ = points_;
 
     LOG_TRACE(fmt::format("[node: {}] Got points: size={}", node_.node_index(), points_.size()));
-
-    node_.sync_cluster();
 }
 
 void slave_node::update_points()
@@ -54,8 +53,6 @@ void slave_node::update_points()
     transport_.receive_array<point_t>(points_.begin(), points_.end(), node_.master_node_index());
 
     LOG_TRACE(fmt::format("[node: {}] Updated points: size={}", node_.node_index(), points_.size()));
-
-    node_.sync_cluster();
 }
 
 void slave_node::get_chunk()
@@ -64,8 +61,6 @@ void slave_node::get_chunk()
 
     LOG_INFO(fmt::format(
         "[node: {}] Got chunk: begin={}, end={}", node_.node_index(), working_chunk_.begin, working_chunk_.end));
-
-    node_.sync_cluster();
 }
 
 void slave_node::solve()
@@ -80,8 +75,6 @@ void slave_node::send_solution()
 
     LOG_TRACE(fmt::format(
         "[node: {}] Send solutin: begin={}, end={}", node_.node_index(), working_chunk_.begin, working_chunk_.end));
-
-    node_.sync_cluster();
 }
 
 void slave_node::get_parameters()
@@ -89,8 +82,6 @@ void slave_node::get_parameters()
     solver_params_ = transport_.receive_struct<solver_params>(node_.master_node_index());
 
     LOG_TRACE(fmt::format("[node: {}] Got params", node_.node_index()));
-
-    node_.sync_cluster();
 }
 
 void slave_node::stop()
@@ -111,11 +102,11 @@ void slave_node::loop()
         update_points();
         rebuild_tree();
 
-        loop();
-
         if (nbody_solver_->finished()) {
             stop();
         }
+
+        loop();
     });
 }
 

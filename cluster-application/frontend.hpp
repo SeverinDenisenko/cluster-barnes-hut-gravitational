@@ -1,27 +1,44 @@
 #pragma once
 
+#include "cluster.hpp"
+#include "ev_loop.hpp"
 #include "linalg.hpp"
 #include "model.hpp"
-#include "types.hpp"
+#include "solver.hpp"
+#include "transport.hpp"
+#include <memory>
 
 namespace bh {
+
 class frontend {
 public:
-    frontend(array<point_t>& points);
+    frontend(node& node, cluster_transport& transport);
 
-    void open();
-
-    void update();
-
-    void close();
+    void start();
 
 private:
-    vec2 space_to_screen(vec2 position);
-    real mass_to_radius(real mass, real min_mass, real max_mass);
+    void setup();
 
-    array<point_t>& points_;
+    void get_points();
+
+    void stop();
+
+    void loop();
+
+    void draw();
+
+    vec2 space_to_screen(vec2 position);
+
+    node& node_;
+    cluster_transport& transport_;
+    ev_loop ev_loop_;
+    array<point_t> points_;
+    solver_params solver_params_;
+    std::unique_ptr<solver> solver_;
     vec2 screen_size_;
     real scale_factor_;
+    u32 frontend_refresh_every_;
+    u32 frontend_refresh_counter_;
 };
 
 }
