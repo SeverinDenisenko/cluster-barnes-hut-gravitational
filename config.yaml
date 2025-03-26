@@ -1,10 +1,10 @@
 solver:
   t: 6.28
   dt: 0.01
-  theta: 1.0
-  epsilon: 1.0
+  theta: 0.5
+  epsilon: 0.01
 generator:
-  count: 10000
+  count: 1000
   # Masses are distributed according to power law
   min_mass: 1.0
   max_mass: 2.0
@@ -13,9 +13,9 @@ generator:
   # Distances distributed uniformly
   max_distance: 100.0
   # Distances distributed uniformly
-  scale_velocity: 0.5
+  scale_velocity: 0.05
 frontend:
   enable: true
-  refresh_every: 2
+  refresh_every: 1
 output:
   enable: true

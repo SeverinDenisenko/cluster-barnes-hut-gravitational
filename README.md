@@ -64,6 +64,12 @@ Look into config.yaml and set solver parameters.
 mpiexec --oversubscribe -n <number-of-cores-on-all-nodes-plus-two> -host <master-node>,<slave-node-ip-1>,<slave-node-ip-2> ./build/bin/cluster-application
 ```
 
+For 8-threaded CPU:
+
+```
+mpirun --oversubscribe -n 10 ./build/bin/cluster-application
+```
+
 Here we oversubscribe by two threads because master thread and frontend does almost no work.
 
 # Benchmark results
