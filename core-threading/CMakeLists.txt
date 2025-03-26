@@ -1,4 +1,4 @@
-add_library(core-threading STATIC ev_loop.cpp threadpool.cpp)
+add_library(core-threading STATIC ev_loop.cpp)
 
 target_include_directories(core-threading PUBLIC include)
 target_link_libraries(core-threading PUBLIC core-infrastructure)
