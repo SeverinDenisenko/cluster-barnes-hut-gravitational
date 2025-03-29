@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "chunks.hpp"
 #include "cluster.hpp"
 #include "ev_loop.hpp"
