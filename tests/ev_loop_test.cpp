@@ -1,40 +1,60 @@
 #include <gtest/gtest.h>
 
 #include "ev_loop.hpp"
+#include "types.hpp"
 
 namespace bh {
 
 TEST(EvLoopTest, StartStopTest)
 {
-    ev_loop loop;
-
-    loop.start([&loop]() { loop.stop(); });
+    startEvLoop([](unit) -> unit {
+        stopEvLoop();
+        return unit();
+    });
 }
 
 TEST(EvLoopTest, PutTaskTest)
 {
-    ev_loop loop;
+    startEvLoop([](unit) -> unit {
+        future<unit> fut = pushToEvLoop<unit>([](unit) -> unit {
+            stopEvLoop();
+            return unit();
+        });
 
-    loop.start([&loop]() { loop.push([&loop]() { loop.stop(); }); });
+        return unit();
+    });
 }
 
-void count(ev_loop& loop, int counter)
+TEST(EvLoopTest, ThenTest)
+{
+    startEvLoop([](unit) -> unit {
+        future<unit> fut = pushToEvLoop<u32>([](unit) -> u32 { return 42; }).then<unit>([](u32 res) -> unit {
+            EXPECT_EQ(42, res);
+            stopEvLoop();
+            return unit();
+        });
+
+        return unit();
+    });
+}
+
+void count(int counter)
 {
     if (counter == 0) {
-        loop.stop();
+        stopEvLoop();
     } else {
-        loop.push([&loop, counter = counter - 1]() { //
-            count(loop, counter);
+        future<unit> fut = pushToEvLoop<unit>([counter = counter - 1](unit) -> unit { //
+            count(counter);
+            return unit();
         });
     }
 }
 
 TEST(EvLoopTest, CounterTest)
 {
-    ev_loop loop;
-
-    loop.start([&loop]() { //
-        count(loop, 10);
+    startEvLoop([](unit) -> unit {
+        count(10);
+        return unit();
     });
 }
 

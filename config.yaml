@@ -4,7 +4,7 @@ solver:
   theta: 0.5
   epsilon: 0.01
 generator:
-  count: 1000
+  count: 20000
   # Masses are distributed according to power law
   min_mass: 1.0
   max_mass: 2.0

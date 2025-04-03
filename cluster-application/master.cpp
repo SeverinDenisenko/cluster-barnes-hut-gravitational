@@ -11,6 +11,7 @@
 #include "logging.hpp"
 #include "model.hpp"
 #include "solver.hpp"
+#include "spdlog/fmt/bundled/format.h"
 #include "transport.hpp"
 #include "types.hpp"
 
@@ -26,9 +27,11 @@ void master_node::start()
 {
     LOG_INFO("Starting master application...");
 
-    ev_loop_.start([this]() {
+    startEvLoop([this](unit) -> unit {
         setup();
         loop();
+
+        return unit();
     });
 
     LOG_INFO("Exiting master application...");
@@ -93,7 +96,7 @@ void master_node::send_chunks()
 
 void master_node::stop()
 {
-    ev_loop_.stop();
+    stopEvLoop();
 }
 
 void master_node::send_parameters()
@@ -141,12 +144,14 @@ void master_node::send_to_frontend()
 
 void master_node::loop()
 {
-    ev_loop_.push([this]() {
+    pushToEvLoop<unit>([this](unit) -> unit {
         get_solutions();
         rebuild_tree();
         send_points();
 
         nbody_solver_->step(0, 0);
+
+        LOG_INFO(fmt::format("Done {:.1f}%", nbody_solver_->time() / solver_params_.t * 100.0_r));
 
         if (enable_frontend_ && frontend_refresh_counter_ % frontend_refresh_every_ == 0) {
             send_to_frontend();
@@ -161,6 +166,8 @@ void master_node::loop()
         }
 
         loop();
+
+        return unit();
     });
 }
 

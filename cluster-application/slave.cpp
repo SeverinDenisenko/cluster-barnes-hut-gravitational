@@ -14,7 +14,6 @@ namespace bh {
 slave_node::slave_node(node& node, cluster_transport& transport)
     : node_(node)
     , transport_(transport)
-    , ev_loop_()
 {
 }
 
@@ -22,9 +21,11 @@ void slave_node::start()
 {
     LOG_INFO("Starting slave application...");
 
-    ev_loop_.start([this]() {
+    startEvLoop([this](unit) -> unit {
         setup();
         loop();
+
+        return unit();
     });
 
     LOG_INFO("Exiting slave application...");
@@ -42,7 +43,7 @@ void slave_node::setup()
 
 void slave_node::get_points()
 {
-    points_ = transport_.receive_array<point_t>(node_.master_node_index());
+    points_      = transport_.receive_array<point_t>(node_.master_node_index());
     points_copy_ = points_;
 
     LOG_TRACE(fmt::format("[node: {}] Got points: size={}", node_.node_index(), points_.size()));
@@ -86,7 +87,7 @@ void slave_node::get_parameters()
 
 void slave_node::stop()
 {
-    ev_loop_.stop();
+    stopEvLoop();
 }
 
 void slave_node::rebuild_tree()
@@ -96,7 +97,7 @@ void slave_node::rebuild_tree()
 
 void slave_node::loop()
 {
-    ev_loop_.push([this]() {
+    pushToEvLoop<unit>([this](unit) -> unit {
         solve();
         send_solution();
         update_points();
@@ -107,6 +108,8 @@ void slave_node::loop()
         }
 
         loop();
+
+        return unit();
     });
 }
 

@@ -1,12 +1,12 @@
 #pragma once
 
+#include <memory>
+
 #include "cluster.hpp"
-#include "ev_loop.hpp"
 #include "linalg.hpp"
 #include "model.hpp"
 #include "solver.hpp"
 #include "transport.hpp"
-#include <memory>
 
 namespace bh {
 
@@ -31,7 +31,6 @@ private:
 
     node& node_;
     cluster_transport& transport_;
-    ev_loop ev_loop_;
     array<point_t> points_;
     solver_params solver_params_;
     std::unique_ptr<solver> solver_;

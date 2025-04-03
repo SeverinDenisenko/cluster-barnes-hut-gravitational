@@ -4,7 +4,6 @@
 
 #include "chunks.hpp"
 #include "cluster.hpp"
-#include "ev_loop.hpp"
 #include "model.hpp"
 #include "solver.hpp"
 #include "transport.hpp"
@@ -41,7 +40,6 @@ private:
 
     node& node_;
     cluster_transport& transport_;
-    ev_loop ev_loop_;
     solver_params solver_params_;
     array<point_t> points_;
     array<point_t> points_copy_;

@@ -3,6 +3,7 @@
 #include <raylib.h>
 #include <yaml-cpp/yaml.h>
 
+#include "ev_loop.hpp"
 #include "logging.hpp"
 #include "model.hpp"
 
@@ -31,9 +32,11 @@ void frontend::start()
 
     LOG_INFO("Starting frontend application...");
 
-    ev_loop_.start([this]() {
+    startEvLoop([this](unit) -> unit {
         setup();
         loop();
+
+        return unit();
     });
 
     LOG_INFO("Exiting frontend application...");
@@ -74,7 +77,7 @@ void frontend::get_points()
 
 void frontend::loop()
 {
-    ev_loop_.push([this]() {
+    pushToEvLoop<unit>([this](unit) -> unit {
         draw();
 
         solver_->step(0, 0);
@@ -89,13 +92,15 @@ void frontend::loop()
         }
 
         loop();
+
+        return unit();
     });
 }
 
 void frontend::stop()
 {
     CloseWindow();
-    ev_loop_.stop();
+    stopEvLoop();
 }
 
 vec2 frontend::space_to_screen(vec2 position)
