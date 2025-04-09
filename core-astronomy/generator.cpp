@@ -1,4 +1,5 @@
 #include "generator.hpp"
+#include "logging.hpp"
 
 #include <cmath>
 #include <random>
@@ -10,17 +11,6 @@ generator::generator(generator_params params)
 {
 }
 
-static real power_distribution(real min, real max, real power)
-{
-    static std::random_device rand_dev;
-    static std::mt19937 rand_engine(rand_dev());
-    static std::uniform_real_distribution<real> uniform(0.0_r, 1.0_r);
-
-    return std::pow(
-        (std::pow(max, power + 1) - std::pow(min, power + 1)) * uniform(rand_engine) + std::pow(min, power + 1),
-        1 / (power + 1));
-}
-
 array<point_t> generator::generate()
 {
     array<point_t> points;
@@ -28,18 +18,39 @@ array<point_t> generator::generate()
     std::random_device rand_dev;
     std::mt19937 rand_engine(rand_dev());
     std::uniform_real_distribution<real> angle_dist(0.0_r, 2.0_r * M_PI);
-    std::uniform_real_distribution<real> position_dist(0, params_.max_distance);
+    std::uniform_real_distribution<real> enclosed_mass_dist(0.0_r, 1.0_r);
+    std::uniform_real_distribution<real> position_distribution(-1.0_r, 1.0_r);
+    std::uniform_real_distribution<real> uniform_distribution(0.0_r, 1.0_r);
 
-    for (u32 i = 0; i < params_.count; ++i) {
-        real angle = angle_dist(rand_engine);
+    real speed_scale_factor = 1.0_r / params_.scale_factor;
+    real mass               = 1.0_r / params_.count;
 
-        real r        = position_dist(rand_engine);
-        vec2 position = vec2 { std::cos(angle), std::sin(angle) } * r;
-        real mass     = power_distribution(params_.min_mass, params_.max_mass, params_.power_mass) * params_.scale_mass;
+    for (u32 body = 0; body < params_.count; ++body) {
+        real enclosed_mass    = enclosed_mass_dist(rand_engine);
+        real enclosing_radius = 1.0_r / std::sqrt(std::pow(enclosed_mass, -2.0_r / 3.0_r) - 1.0_r);
 
-        real v = r * params_.scale_velocity;
+        vec2 position;
+        do {
+            for (u32 i = 0; i < 2; i++) {
+                position[i] = position_distribution(rand_engine);
+            }
+        } while (position.len() > 1.0);
+        position = position * (enclosing_radius * params_.scale_factor / position.len());
 
-        vec2 velosity = vec2 { -std::sin(angle), std::cos(angle) } * v;
+        real x, y;
+        do {
+            x = uniform_distribution(rand_engine);
+            y = uniform_distribution(rand_engine) / 10.0_r;
+        } while (y > x * x * std::pow(1.0_r - x * x, 3.5_r));
+        real speed_scale = x * std::sqrt(2.0_r / std::sqrt(1.0_r + enclosing_radius * enclosing_radius));
+
+        vec2 velosity;
+        do {
+            for (u32 i = 0; i < 2; i++) {
+                velosity[i] = position_distribution(rand_engine);
+            }
+        } while (velosity.len() > 1.0);
+        velosity = velosity * (speed_scale_factor * speed_scale / velosity.len());
 
         point_t point { .position = position, .velosity = velosity, .mass = mass };
 

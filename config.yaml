@@ -4,16 +4,11 @@ solver:
   theta: 0.5
   epsilon: 0.01
 generator:
-  count: 20000
-  # Masses are distributed according to power law
-  min_mass: 1.0
-  max_mass: 2.0
-  power_mass: 2.38
-  scale_mass: 1.0
-  # Distances distributed uniformly
-  max_distance: 100.0
-  # Distances distributed uniformly
-  scale_velocity: 0.05
+  count: 10000
+  # Parameters of a Plummer model
+  # M = -4E = G = 1
+  # Aarseth, SJ, Henon, M, & Wielen, R (1974) Astr & Ap, 37, 183.
+  scale_factor: 0.589
 frontend:
   enable: true
   refresh_every: 1

@@ -13,6 +13,7 @@ struct solver_params {
     real t;
     real dt;
     real theta;
+    // softening parameter
     real epsilon;
 };
 

@@ -6,12 +6,7 @@ namespace bh {
 
 struct generator_params {
     u32 count;
-    real min_mass;
-    real max_mass;
-    real power_mass;
-    real scale_mass;
-    real max_distance;
-    real scale_velocity;
+    real scale_factor;
 };
 
 class generator {

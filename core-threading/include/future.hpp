@@ -98,6 +98,16 @@ public:
     template <typename U>
     friend std::pair<future<U>, promice<U>> create_futue_promice_pair() noexcept;
 
+    bool resolved()
+    {
+        return control_block_->resolved;
+    }
+
+    T get()
+    {
+        return control_block_->value;
+    }
+
     template <typename Ret>
     future<Ret> then(task_t<Ret, T> task);
 

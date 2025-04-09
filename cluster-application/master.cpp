@@ -48,12 +48,7 @@ void master_node::setup()
     enable_output_ = config["output"]["enable"].as<bool>();
 
     generator_params generator_params { .count          = config["generator"]["count"].as<u32>(),
-                                        .min_mass       = config["generator"]["min_mass"].as<real>(),
-                                        .max_mass       = config["generator"]["max_mass"].as<real>(),
-                                        .power_mass     = config["generator"]["power_mass"].as<real>(),
-                                        .scale_mass     = config["generator"]["scale_mass"].as<real>(),
-                                        .max_distance   = config["generator"]["max_distance"].as<real>(),
-                                        .scale_velocity = config["generator"]["scale_velocity"].as<real>() };
+                                        .scale_factor   = config["generator"]["scale_factor"].as<real>() };
 
     solver_params_ = solver_params { .t       = config["solver"]["t"].as<real>(),
                                      .dt      = config["solver"]["dt"].as<real>(),
