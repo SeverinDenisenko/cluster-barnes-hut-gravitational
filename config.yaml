@@ -1,8 +1,9 @@
 solver:
-  t: 6.28
+  t: 20.0
   dt: 0.01
-  theta: 0.5
-  epsilon: 0.01
+  theta: 0.8
+  # Optimal smoothing length is 1.1 * count ** -0.28
+  epsilon: 0.08
 generator:
   count: 10000
   # Parameters of a Plummer model

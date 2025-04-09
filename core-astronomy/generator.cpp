@@ -1,5 +1,4 @@
 #include "generator.hpp"
-#include "logging.hpp"
 
 #include <cmath>
 #include <random>

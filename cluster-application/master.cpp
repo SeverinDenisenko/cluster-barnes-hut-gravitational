@@ -47,8 +47,8 @@ void master_node::setup()
 
     enable_output_ = config["output"]["enable"].as<bool>();
 
-    generator_params generator_params { .count          = config["generator"]["count"].as<u32>(),
-                                        .scale_factor   = config["generator"]["scale_factor"].as<real>() };
+    generator_params generator_params { .count        = config["generator"]["count"].as<u32>(),
+                                        .scale_factor = config["generator"]["scale_factor"].as<real>() };
 
     solver_params_ = solver_params { .t       = config["solver"]["t"].as<real>(),
                                      .dt      = config["solver"]["dt"].as<real>(),
@@ -134,7 +134,9 @@ void master_node::write_results()
 
 void master_node::send_to_frontend()
 {
-    transport_.send_array<point_t>(points_.begin(), points_.end(), node_.frontend_node_index());
+    if (enable_frontend_) {
+        transport_.send_array<point_t>(points_.begin(), points_.end(), node_.frontend_node_index());
+    }
 }
 
 void master_node::loop()
@@ -148,7 +150,7 @@ void master_node::loop()
 
         LOG_INFO(fmt::format("Done {:.1f}%", nbody_solver_->time() / solver_params_.t * 100.0_r));
 
-        if (enable_frontend_ && frontend_refresh_counter_ % frontend_refresh_every_ == 0) {
+        if (frontend_refresh_counter_ % frontend_refresh_every_ == 0) {
             send_to_frontend();
         }
         frontend_refresh_counter_++;
