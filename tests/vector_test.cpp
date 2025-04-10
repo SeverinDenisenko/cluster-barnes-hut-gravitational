@@ -15,10 +15,10 @@ TEST(VectorTest, MultiplyTest)
 
 TEST(VectorTest, DivideTest)
 {
-    vec2 vec_1 { 1.0f, 1.0f };
-    vec2 vec_2 { 0.1f, 0.1f };
+    vec2 vec_1 { 0.5f, 0.5f };
+    vec2 vec_2 { 0.25f, 0.25f };
 
-    EXPECT_EQ(vec_1 / 10.0f, vec_2);
+    EXPECT_EQ(vec_1 / 2.0f, vec_2);
 }
 
 TEST(VectorTest, ChainTest)
