@@ -1,7 +1,10 @@
+#include <chrono>
 #include <gtest/gtest.h>
 #include <memory>
+#include <thread>
 
 #include "cluster.hpp"
+#include "ev_loop.hpp"
 #include "transport.hpp"
 #include "types.hpp"
 
@@ -33,12 +36,12 @@ TEST(ClusterTransportTest, SendReciveTest)
 {
     cluster_transport transport;
 
-    if (g_node->is_master()) {
-        transport.send_struct<int>(42, g_node->slaves_node_indexes().front());
-        transport.send_struct<float>(1.234f, g_node->slaves_node_indexes().front());
+    if (g_node->node_index() == 0) {
+        transport.send_struct<int>(42, 1, 100);
+        transport.send_struct<float>(1.234f, 1, 101);
     } else {
-        ASSERT_EQ(transport.receive_struct<int>(g_node->master_node_index()), 42);
-        ASSERT_EQ(transport.receive_struct<float>(g_node->master_node_index()), 1.234f);
+        ASSERT_EQ(transport.receive_struct<int>(0, 100), 42);
+        ASSERT_EQ(transport.receive_struct<float>(0, 101), 1.234f);
     }
 }
 
@@ -49,12 +52,12 @@ TEST(ClusterTransportTest, ArraySendReciveTest)
     array<int> int_array { 1, 2, 3, 4 };
     array<float> float_array { 1.0f, 2.0f, 3.0f, 4.0f };
 
-    if (g_node->is_master()) {
-        transport.send_array<int>(int_array, g_node->slaves_node_indexes().front());
-        transport.send_array<float>(float_array, g_node->slaves_node_indexes().front());
+    if (g_node->node_index() == 0) {
+        transport.send_array<int>(int_array, 1, 102);
+        transport.send_array<float>(float_array, 1, 103);
     } else {
-        ASSERT_EQ(transport.receive_array<int>(g_node->master_node_index()), int_array);
-        ASSERT_EQ(transport.receive_array<float>(g_node->master_node_index()), float_array);
+        ASSERT_EQ(transport.receive_array<int>(0, 102), int_array);
+        ASSERT_EQ(transport.receive_array<float>(0, 103), float_array);
     }
 }
 
@@ -65,12 +68,12 @@ TEST(ClusterTransportTest, ArrayIteratorSendReciveTest)
     array<int> int_array { 1, 2, 3, 4 };
     array<float> float_array { 1.0f, 2.0f, 3.0f, 4.0f };
 
-    if (g_node->is_master()) {
-        transport.send_array<int>(int_array.begin(), int_array.end(), g_node->slaves_node_indexes().front());
-        transport.send_array<float>(float_array.begin(), float_array.end(), g_node->slaves_node_indexes().front());
+    if (g_node->node_index() == 0) {
+        transport.send_array<int>(int_array.begin(), int_array.end(), 1, 104);
+        transport.send_array<float>(float_array.begin(), float_array.end(), 1, 105);
     } else {
-        ASSERT_EQ(transport.receive_array<int>(g_node->master_node_index()), int_array);
-        ASSERT_EQ(transport.receive_array<float>(g_node->master_node_index()), float_array);
+        ASSERT_EQ(transport.receive_array<int>(0, 104), int_array);
+        ASSERT_EQ(transport.receive_array<float>(0, 105), float_array);
     }
 }
 
@@ -81,24 +84,78 @@ TEST(ClusterTransportTest, ArraySendIteratorReciveTest)
     array<int> int_array { 1, 2, 3, 4 };
     array<float> float_array { 1.0f, 2.0f, 3.0f, 4.0f };
 
-    if (g_node->is_master()) {
-        transport.send_array<int>(int_array, g_node->slaves_node_indexes().front());
-        transport.send_array<float>(float_array, g_node->slaves_node_indexes().front());
+    if (g_node->node_index() == 0) {
+        transport.send_array<int>(int_array, 1, 107);
+        transport.send_array<float>(float_array, 1, 108);
     } else {
-        array<int> int_array_recv(4);
-        array<float> float_array_recv(4);
+        array<int> int_array_recv { 0, 0, 0, 0 };
+        array<float> float_array_recv { 0.0, 0.0, 0.0, 0.0 };
 
-        transport.receive_array<int>(int_array_recv.begin(), int_array_recv.end(), g_node->master_node_index());
-        transport.receive_array<float>(float_array_recv.begin(), float_array_recv.end(), g_node->master_node_index());
+        transport.receive_array<int>(int_array_recv.begin(), int_array_recv.end(), 0, 107);
+        transport.receive_array<float>(float_array_recv.begin(), float_array_recv.end(), 0, 108);
 
         ASSERT_EQ(int_array_recv, int_array);
         ASSERT_EQ(float_array_recv, float_array);
     }
 }
 
+TEST(ClusterTransportTest, SendAsyncReciveTest)
+{
+    using namespace std::chrono_literals;
+
+    if (g_node->node_index() == 0) {
+        pushToEvLoop<unit>([](unit) -> unit {
+            cluster_transport transport;
+
+            transport.send_struct<u32>(42, 1, 106);
+
+            return unit();
+        });
+
+        pushToEvLoop<unit>([](unit) -> unit {
+            cluster_transport transport;
+
+            transport.add_handler<u32>(1, 107, [](u32 number) -> unit {
+                EXPECT_EQ(42, number);
+
+                return unit();
+            });
+
+            return unit();
+        });
+
+    } else {
+        pushToEvLoop<unit>([](unit) -> unit {
+            cluster_transport transport;
+
+            transport.add_handler<u32>(0, 106, [](u32 number) -> unit {
+                EXPECT_EQ(40, number);
+
+                return unit();
+            });
+
+            return unit();
+        });
+
+        pushToEvLoop<unit>([](unit) -> unit {
+            cluster_transport transport;
+
+            transport.send_struct<u32>(42, 0, 107);
+
+            return unit();
+        });
+    }
+}
+
 TEST(ClusterTransportTest, FinalizeTest)
 {
-    g_node = nullptr;
+    pushToEvLoop<unit>([](unit) -> unit {
+        g_node = nullptr;
+
+        stopEvLoop();
+
+        return unit();
+    });
 }
 
 }
@@ -108,5 +165,12 @@ int main(int argc, char** argv)
     std::string command_line_arg(argc == 2 ? argv[1] : "");
     testing::InitGoogleTest(&argc, argv);
     testing::AddGlobalTestEnvironment(new bh::ClusterTestEnviroment(argc, argv));
-    return RUN_ALL_TESTS();
+
+    bh::startEvLoop([](bh::unit) -> bh::unit {
+        (void)RUN_ALL_TESTS();
+
+        return bh::unit();
+    });
+
+    return 0;
 }

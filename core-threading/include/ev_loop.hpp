@@ -13,16 +13,12 @@ public:
 
     void start(task_t<unit, unit> task)
     {
-        task_queue_.push_back(std::move(task));
         stop_ = false;
+        task(unit());
 
-        while (!stop_) {
-            if (task_queue_.empty()) {
-                continue;
-            } else {
-                task_queue_.front()(unit());
-                task_queue_.pop_front();
-            }
+        while (!stop_ && !task_queue_.empty()) {
+            task_queue_.front()(unit());
+            task_queue_.pop_front();
         }
     }
 

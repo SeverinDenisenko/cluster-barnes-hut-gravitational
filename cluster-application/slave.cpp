@@ -4,6 +4,7 @@
 #include "cluster.hpp"
 #include "ev_loop.hpp"
 #include "logging.hpp"
+#include "messages.hpp"
 #include "model.hpp"
 #include "solver.hpp"
 #include "transport.hpp"
@@ -23,7 +24,6 @@ void slave_node::start()
 
     startEvLoop([this](unit) -> unit {
         setup();
-        loop();
 
         return unit();
     });
@@ -34,34 +34,40 @@ void slave_node::start()
 void slave_node::setup()
 {
     get_parameters();
-    get_points();
-
-    nbody_solver_ = std::make_unique<solver>(solver_params_, points_, points_copy_);
-
-    get_chunk();
 }
 
 void slave_node::get_points()
 {
-    points_      = transport_.receive_array<point_t>(node_.master_node_index());
+    points_
+        = transport_.receive_array<point_t>(node_.master_node_index(), std::to_underlying(cluster_messages::points));
     points_copy_ = points_;
 
     LOG_TRACE(fmt::format("[node: {}] Got points: size={}", node_.node_index(), points_.size()));
+
+    nbody_solver_ = std::make_unique<solver>(solver_params_, points_, points_copy_);
+
+    transport_.add_handler<chunk>(
+        node_.master_node_index(), std::to_underlying(cluster_messages::chunk), [this](chunk chunk) -> unit {
+            working_chunk_ = chunk;
+
+            LOG_INFO(fmt::format(
+                "[node: {}] Got chunk: begin={}, end={}",
+                node_.node_index(),
+                working_chunk_.begin,
+                working_chunk_.end));
+
+            loop();
+
+            return unit();
+        });
 }
 
 void slave_node::update_points()
 {
-    transport_.receive_array<point_t>(points_.begin(), points_.end(), node_.master_node_index());
+    transport_.receive_array<point_t>(
+        points_.begin(), points_.end(), node_.master_node_index(), std::to_underlying(cluster_messages::points));
 
     LOG_TRACE(fmt::format("[node: {}] Updated points: size={}", node_.node_index(), points_.size()));
-}
-
-void slave_node::get_chunk()
-{
-    working_chunk_ = transport_.receive_struct<chunk>(node_.master_node_index());
-
-    LOG_INFO(fmt::format(
-        "[node: {}] Got chunk: begin={}, end={}", node_.node_index(), working_chunk_.begin, working_chunk_.end));
 }
 
 void slave_node::solve()
@@ -72,7 +78,10 @@ void slave_node::solve()
 void slave_node::send_solution()
 {
     transport_.send_array<point_t>(
-        points_.begin() + working_chunk_.begin, points_.begin() + working_chunk_.end, node_.master_node_index());
+        points_.begin() + working_chunk_.begin,
+        points_.begin() + working_chunk_.end,
+        node_.master_node_index(),
+        std::to_underlying(cluster_messages::points));
 
     LOG_TRACE(fmt::format(
         "[node: {}] Send solutin: begin={}, end={}", node_.node_index(), working_chunk_.begin, working_chunk_.end));
@@ -80,9 +89,18 @@ void slave_node::send_solution()
 
 void slave_node::get_parameters()
 {
-    solver_params_ = transport_.receive_struct<solver_params>(node_.master_node_index());
+    transport_.add_handler<solver_params>(
+        node_.master_node_index(),
+        std::to_underlying(cluster_messages::solver_params),
+        [this](solver_params solver_params) -> unit {
+            solver_params_ = solver_params;
 
-    LOG_TRACE(fmt::format("[node: {}] Got params", node_.node_index()));
+            LOG_TRACE(fmt::format("[node: {}] Got params", node_.node_index()));
+
+            get_points();
+
+            return unit();
+        });
 }
 
 void slave_node::stop()

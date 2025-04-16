@@ -24,8 +24,6 @@ private:
 
     void update_points();
 
-    void get_chunk();
-
     void solve();
 
     void send_solution();

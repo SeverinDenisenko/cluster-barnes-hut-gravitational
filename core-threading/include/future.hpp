@@ -39,8 +39,13 @@ public:
         }
     }
 
-    promice(const promice&) = delete;
-    promice()               = delete;
+    promice(const promice& other)
+        : control_block_(other.control_block_)
+    {
+        ++control_block_->refcount;
+    }
+
+    promice() = delete;
 
     promice(promice&& other)
     {

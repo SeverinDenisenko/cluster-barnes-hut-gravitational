@@ -19,8 +19,6 @@ public:
 private:
     void setup();
 
-    void get_points();
-
     void stop();
 
     void loop();
@@ -37,7 +35,6 @@ private:
     vec2 screen_size_;
     real scale_factor_;
     u32 frontend_refresh_every_;
-    u32 frontend_refresh_counter_;
 };
 
 }
