@@ -4,6 +4,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 #include "fmt/format.h"
 
@@ -20,97 +21,49 @@ public:
     cluster_transport(const cluster_transport&) = delete;
     cluster_transport(cluster_transport&&)      = delete;
 
-    template <typename T>
-    void poll_message(u32 node, u32 msg_id, task_t<unit, T> handler, bool recurring = false)
+    template <typename Message>
+    void poll_message(u32 node, task_t<unit, Message> handler, Message recv_msg, bool recurring = false)
     {
-        if (can_recive(node, msg_id)) {
-            T msg;
-            size_t size = msg_size(node, msg_id);
+        if (can_recive(node, std::to_underlying(recv_msg.msg_type))) {
+            size_t size = msg_size(node, std::to_underlying(recv_msg.msg_type));
+            array<std::byte> buffer(size);
 
-            if (size != sizeof(T)) {
-                throw std::runtime_error(fmt::format(
-                    "Recived wrong amount in cluster_transport::receive_array(): recv={}, expected={}",
-                    size,
-                    sizeof(T)));
-            }
+            receive(buffer.data(), size, node, std::to_underlying(recv_msg.msg_type));
+            recv_msg.parce(buffer.data());
 
-            receive(&msg, size, node, msg_id);
-            handler(msg);
+            handler(recv_msg);
             if (recurring) {
-                pushToEvLoop<unit>([this, node, msg_id, handler = std::move(handler), recurring](unit) -> unit {
-                    poll_message(node, msg_id, std::move(handler), recurring);
+                pushToEvLoop<unit>([this, node, handler = std::move(handler), recv_msg, recurring](unit) -> unit {
+                    poll_message(node, std::move(handler), recv_msg, recurring);
 
                     return unit();
                 });
             }
         } else {
-            pushToEvLoop<unit>([this, node, msg_id, handler = std::move(handler), recurring](unit) -> unit {
-                poll_message(node, msg_id, std::move(handler), recurring);
+            pushToEvLoop<unit>([this, node, handler = std::move(handler), recv_msg, recurring](unit) -> unit {
+                poll_message(node, std::move(handler), recv_msg, recurring);
 
                 return unit();
             });
         }
     }
 
-    template <typename T>
-    void poll_message(u32 node, u32 msg_id, task_t<unit, array<T>> handler, bool recurring = false)
+    template <typename Message>
+    void add_handler(u32 node, task_t<unit, Message> handler, Message recv_message, bool recurring = false)
     {
-        if (can_recive(node, msg_id)) {
-            size_t size = msg_size(node, msg_id);
-            array<T> msg(size / sizeof(T));
-
-            receive(msg.data(), size, node, msg_id);
-            handler(msg);
-            if (recurring) {
-                pushToEvLoop<unit>([this, node, msg_id, handler = std::move(handler), recurring](unit) -> unit {
-                    poll_message(node, msg_id, std::move(handler), recurring);
-
-                    return unit();
-                });
-            }
-        } else {
-            pushToEvLoop<unit>([this, node, msg_id, handler = std::move(handler), recurring](unit) -> unit {
-                poll_message(node, msg_id, std::move(handler), recurring);
-
-                return unit();
-            });
-        }
-    }
-
-    template <typename T>
-    void add_handler(u32 node, u32 msg_id, task_t<unit, T> handler, bool recurring = false)
-    {
-        pushToEvLoop<unit>([this, node, msg_id, handler = std::move(handler), recurring](unit) -> unit {
-            poll_message(node, msg_id, std::move(handler), recurring);
+        pushToEvLoop<unit>([this, node, handler = std::move(handler), recv_message, recurring](unit) -> unit {
+            poll_message(node, std::move(handler), recv_message, recurring);
 
             return unit();
         });
     }
 
-    template <typename T>
-    void add_handler(u32 node, u32 msg_id, task_t<unit, array<T>> handler, bool recurring = false)
+    template <typename Message>
+    void send_message(u32 node, Message msg)
     {
-        pushToEvLoop<unit>([this, node, msg_id, handler = std::move(handler), recurring](unit) -> unit {
-            poll_message(node, msg_id, std::move(handler), recurring);
-
-            return unit();
-        });
-    }
-
-    template <typename T>
-        requires(std::is_trivially_copyable_v<T>)
-    void send_struct(T msg, u32 node, u32 msg_id)
-    {
-        send(&msg, sizeof(T), node, msg_id);
-    }
-
-    template <typename T>
-        requires(std::is_trivially_copyable_v<T>)
-    T receive_struct(u32 node, u32 msg_id)
-    {
-        T msg;
-        receive(&msg, sizeof(T), node, msg_id);
-        return msg;
+        array<std::byte> data(msg.size());
+        msg.serialize(data.data());
+        send(data.data(), msg.size(), node, std::to_underlying(msg.msg_type));
     }
 
     template <typename T>

@@ -73,7 +73,7 @@ void master_node::send_points()
 {
     for (u32 node : node_.slaves_node_indexes()) {
         transport_.send_array<point_t>(
-            points_.begin(), points_.end(), node, std::to_underlying(cluster_messages::points));
+            points_.begin(), points_.end(), node, std::to_underlying(cluster_message_type::points));
 
         LOG_TRACE(fmt::format("Send points: node={}, size={}", node, points_.size()));
     }
@@ -85,7 +85,7 @@ void master_node::send_chunks()
     working_chunks_ = make_chunks(points_.size(), slaves_.size());
 
     for (u32 i = 0; i < slaves_.size(); ++i) {
-        transport_.send_struct<chunk>(working_chunks_[i], slaves_[i], std::to_underlying(cluster_messages::chunk));
+        transport_.send_message<chunk_message>(slaves_[i], chunk_message { working_chunks_[i] });
 
         LOG_INFO(fmt::format(
             "Send chunk: node={}, begin={}, end={}", slaves_[i], working_chunks_[i].begin, working_chunks_[i].end));
@@ -100,15 +100,14 @@ void master_node::stop()
 void master_node::send_parameters()
 {
     for (u32 node : node_.slaves_node_indexes()) {
-        transport_.send_struct<solver_params>(
-            solver_params_, node, std::to_underlying(cluster_messages::solver_params));
+        transport_.send_message<solver_params_message>(node, solver_params_message { solver_params_ });
 
         LOG_TRACE(fmt::format("Send params: node={}", node));
     }
 
     if (enable_frontend_) {
-        transport_.send_struct<solver_params>(
-            solver_params_, node_.frontend_node_index(), std::to_underlying(cluster_messages::solver_params));
+        transport_.send_message<solver_params_message>(
+            node_.frontend_node_index(), solver_params_message { solver_params_ });
     }
 }
 
@@ -119,7 +118,7 @@ void master_node::get_solutions()
             points_.begin() + working_chunks_[i].begin,
             points_.begin() + working_chunks_[i].end,
             slaves_[i],
-            std::to_underlying(cluster_messages::points));
+            std::to_underlying(cluster_message_type::points));
 
         LOG_TRACE(fmt::format(
             "Got solutin: node={}, begin={}, end={}", slaves_[i], working_chunks_[i].begin, working_chunks_[i].end));
@@ -144,7 +143,10 @@ void master_node::send_to_frontend()
 {
     if (enable_frontend_) {
         transport_.send_array<point_t>(
-            points_.begin(), points_.end(), node_.frontend_node_index(), std::to_underlying(cluster_messages::points));
+            points_.begin(),
+            points_.end(),
+            node_.frontend_node_index(),
+            std::to_underlying(cluster_message_type::points));
     }
 }
 
