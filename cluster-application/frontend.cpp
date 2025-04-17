@@ -44,41 +44,25 @@ void frontend::start()
 
 void frontend::setup()
 {
-    transport_.add_handler<solver_params_message>(
-        node_.master_node_index(),
-        [this](solver_params_message msg) -> unit {
-            solver_params_ = msg.params_;
+    points_ = transport_.receive_array<point_t>(
+        node_.master_node_index(), std::to_underlying(cluster_message_type::points));
 
-            points_ = transport_.receive_array<point_t>(
-                node_.master_node_index(), std::to_underlying(cluster_message_type::points));
-            solver_ = std::make_unique<solver>(solver_params_, points_, points_);
-
-            InitWindow(screen_size_[0], screen_size_[1], "Simulation");
-            SetTargetFPS(0);
-
-            transport_.receive_array<point_t>(
-                points_.begin(),
-                points_.end(),
-                node_.master_node_index(),
-                std::to_underlying(cluster_message_type::points));
-
-            loop();
-
-            return unit();
-        },
-        solver_params_message { solver_params_ });
+    InitWindow(screen_size_[0], screen_size_[1], "Simulation");
+    SetTargetFPS(0);
 
     transport_.add_handler<points_message>(
-        node_.master_node_index(),
-        [this](points_message) -> unit {
-            for (u32 i = 0; i < frontend_refresh_every_; ++i) {
-                solver_->step(0, 0);
-            }
+        node_.master_node_index(), [](points_message) -> unit { return unit(); }, points_message { points_ }, true);
 
+    transport_.add_handler<stop_message>(
+        node_.master_node_index(),
+        [this](stop_message) -> unit {
+            stop();
             return unit();
         },
-        points_message { points_ },
+        stop_message {},
         true);
+
+    loop();
 }
 
 void frontend::draw()
@@ -103,13 +87,6 @@ void frontend::loop()
 {
     pushToEvLoop<unit>([this](unit) -> unit {
         draw();
-
-        solver_->step(0, 0);
-
-        if (solver_->finished()) {
-            stop();
-        }
-
         loop();
 
         return unit();

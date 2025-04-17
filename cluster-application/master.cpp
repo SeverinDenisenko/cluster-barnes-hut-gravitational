@@ -104,11 +104,6 @@ void master_node::send_parameters()
 
         LOG_TRACE(fmt::format("Send params: node={}", node));
     }
-
-    if (enable_frontend_) {
-        transport_.send_message<solver_params_message>(
-            node_.frontend_node_index(), solver_params_message { solver_params_ });
-    }
 }
 
 void master_node::get_solutions()
@@ -123,11 +118,6 @@ void master_node::get_solutions()
         LOG_TRACE(fmt::format(
             "Got solutin: node={}, begin={}, end={}", slaves_[i], working_chunks_[i].begin, working_chunks_[i].end));
     }
-}
-
-void master_node::rebuild_tree()
-{
-    nbody_solver_->rebuild_tree();
 }
 
 void master_node::write_results()
@@ -154,7 +144,7 @@ void master_node::loop()
 {
     pushToEvLoop<unit>([this](unit) -> unit {
         get_solutions();
-        rebuild_tree();
+        nbody_solver_->rebuild_tree();
         send_points();
 
         nbody_solver_->step(0, 0);
@@ -170,6 +160,7 @@ void master_node::loop()
             if (enable_output_) {
                 write_results();
             }
+            transport_.send_message<stop_message>(node_.frontend_node_index(), stop_message {});
             stop();
         }
 

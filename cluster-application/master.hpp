@@ -30,8 +30,6 @@ private:
 
     void get_solutions();
 
-    void rebuild_tree();
-
     void loop();
 
     void write_results();

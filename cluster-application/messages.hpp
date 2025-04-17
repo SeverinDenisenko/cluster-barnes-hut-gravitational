@@ -11,6 +11,7 @@ enum class cluster_message_type : u32 {
     chunk         = 1,
     solver_params = 2,
     points        = 3,
+    stop          = 4,
 };
 
 struct chunk_message {
@@ -73,6 +74,23 @@ struct points_message {
     void serialize(void* buffer)
     {
         memcpy(buffer, points_.data(), points_.size() * sizeof(point_t));
+    }
+};
+
+struct stop_message {
+    static constexpr cluster_message_type msg_type = cluster_message_type::stop;
+
+    void parce(const void*)
+    {
+    }
+
+    size_t size()
+    {
+        return 1;
+    }
+
+    void serialize(void*)
+    {
     }
 };
 

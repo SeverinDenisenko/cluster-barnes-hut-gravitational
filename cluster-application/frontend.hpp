@@ -30,7 +30,6 @@ private:
     node& node_;
     cluster_transport& transport_;
     array<point_t> points_;
-    solver_params solver_params_;
     std::unique_ptr<solver> solver_;
     vec2 screen_size_;
     real scale_factor_;
