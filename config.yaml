@@ -1,7 +1,7 @@
 solver:
-  t: 20.0
-  dt: 0.01
-  theta: 0.8
+  t: 3.14
+  dt: 0.001
+  theta: 0.5
   # Optimal smoothing length is 1.1 * count ** -0.28
   epsilon: 0.08
 generator:

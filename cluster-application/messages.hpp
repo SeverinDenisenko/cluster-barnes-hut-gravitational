@@ -12,6 +12,7 @@ enum class cluster_message_type : u32 {
     solver_params = 2,
     points        = 3,
     stop          = 4,
+    status        = 5,
 };
 
 struct chunk_message {
@@ -91,6 +92,32 @@ struct stop_message {
 
     void serialize(void*)
     {
+    }
+};
+
+struct status {
+    real done_persent;
+    real energy;
+};
+
+struct status_message {
+    static constexpr cluster_message_type msg_type = cluster_message_type::status;
+
+    status status_;
+
+    void parce(const void* buffer)
+    {
+        status_ = *reinterpret_cast<const status*>(buffer);
+    }
+
+    size_t size()
+    {
+        return sizeof(status);
+    }
+
+    void serialize(void* buffer)
+    {
+        *reinterpret_cast<status*>(buffer) = status_;
     }
 };
 

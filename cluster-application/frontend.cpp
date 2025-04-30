@@ -62,18 +62,32 @@ void frontend::setup()
         stop_message {},
         true);
 
+    transport_.add_handler<status_message>(
+        node_.master_node_index(),
+        [this](status_message msg) -> unit {
+            done_persent_ = msg.status_.done_persent;
+            energy_vec_.push_back(msg.status_.energy);
+            return unit();
+        },
+        status_message { status { .done_persent = 0.0_r, .energy = 0.0_r } },
+        true);
+
     loop();
 }
 
 void frontend::draw()
 {
     scale_factor_ += GetMouseWheelMove();
+    if (scale_factor_ < 0) {
+        scale_factor_ = 0;
+    }
 
     BeginDrawing();
 
     ClearBackground(BLACK);
 
-    DrawText(TextFormat("%i fps", GetFPS()), 0, 0, 20, WHITE);
+    DrawText(TextFormat("%i frames per second", GetFPS()), 0, 0, 20, WHITE);
+    DrawText(TextFormat("%i percent done", (int)done_persent_), 0, 25, 20, WHITE);
 
     for (point_t& point : points_) {
         vec2 position = space_to_screen(point.position);

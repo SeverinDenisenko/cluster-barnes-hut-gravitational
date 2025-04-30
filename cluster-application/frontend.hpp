@@ -34,6 +34,8 @@ private:
     vec2 screen_size_;
     real scale_factor_;
     u32 frontend_refresh_every_;
+    real done_persent_;
+    array<real> energy_vec_;
 };
 
 }

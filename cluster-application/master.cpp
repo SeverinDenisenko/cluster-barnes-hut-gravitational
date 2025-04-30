@@ -60,12 +60,11 @@ void master_node::setup()
     points_      = generator { generator_params }.generate();
     points_copy_ = points_;
 
+    nbody_solver_ = std::make_unique<solver>(solver_params_, points_, points_copy_);
+
     send_parameters();
     send_points();
     send_to_frontend();
-
-    nbody_solver_ = std::make_unique<solver>(solver_params_, points_, points_copy_);
-
     send_chunks();
 }
 
@@ -137,6 +136,11 @@ void master_node::send_to_frontend()
             points_.end(),
             node_.frontend_node_index(),
             std::to_underlying(cluster_message_type::points));
+
+        transport_.send_message<status_message>(
+            node_.frontend_node_index(),
+            status_message {
+                status { .done_persent = nbody_solver_->time() / solver_params_.t * 100.0_r, .energy = 0.0_r } });
     }
 }
 
@@ -148,8 +152,6 @@ void master_node::loop()
         send_points();
 
         nbody_solver_->step(0, 0);
-
-        LOG_INFO(fmt::format("Done {:.1f}%", nbody_solver_->time() / solver_params_.t * 100.0_r));
 
         if (frontend_refresh_counter_ % frontend_refresh_every_ == 0) {
             send_to_frontend();
