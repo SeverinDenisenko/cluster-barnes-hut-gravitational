@@ -64,7 +64,6 @@ void master_node::setup()
 
     send_parameters();
     send_points();
-    send_to_frontend();
     send_chunks();
 }
 
@@ -139,8 +138,8 @@ void master_node::send_to_frontend()
 
         transport_.send_message<status_message>(
             node_.frontend_node_index(),
-            status_message {
-                status { .done_persent = nbody_solver_->time() / solver_params_.t * 100.0_r, .energy = 0.0_r } });
+            status_message { status { .done_persent = nbody_solver_->time() / solver_params_.t * 100.0_r,
+                                      .energy       = nbody_solver_->total_energy() } });
     }
 }
 

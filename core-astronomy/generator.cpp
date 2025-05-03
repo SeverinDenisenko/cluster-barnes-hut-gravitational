@@ -43,15 +43,15 @@ array<point_t> generator::generate()
         } while (y > x * x * std::pow(1.0_r - x * x, 3.5_r));
         real speed_scale = x * std::sqrt(2.0_r / std::sqrt(1.0_r + enclosing_radius * enclosing_radius));
 
-        vec2 velosity;
+        vec2 velocity;
         do {
             for (u32 i = 0; i < 2; i++) {
-                velosity[i] = position_distribution(rand_engine);
+                velocity[i] = position_distribution(rand_engine);
             }
-        } while (velosity.len() > 1.0);
-        velosity = velosity * (speed_scale_factor * speed_scale / velosity.len());
+        } while (velocity.len() > 1.0);
+        velocity = velocity * (speed_scale_factor * speed_scale / velocity.len());
 
-        point_t point { .position = position, .velosity = velosity, .mass = mass };
+        point_t point { .position = position, .velocity = velocity, .mass = mass };
 
         points.push_back(point);
     }

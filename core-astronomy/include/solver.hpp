@@ -89,6 +89,29 @@ public:
         return t_;
     }
 
+    real total_energy()
+    {
+        real kinetic   = 0.0_r;
+        real potential = 0.0_r;
+
+        for (size_t i = 0; i < points_.size(); ++i) {
+            kinetic += 0.5 * points_[i].mass * vec2::dot(points_[i].velocity, points_[i].velocity);
+        }
+
+        for (u32 i = 0; i < points_.size(); ++i) {
+            for (u32 j = 0; j < points_.size(); ++j) {
+                if (i == j) {
+                    continue;
+                }
+
+                potential
+                    += -0.5 * points_[i].mass * points_[j].mass / (points_[i].position - points_[j].position).len();
+            }
+        }
+
+        return kinetic + potential;
+    }
+
 private:
     void model_body(u32 i)
     {

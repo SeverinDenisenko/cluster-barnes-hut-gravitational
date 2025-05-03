@@ -1,7 +1,9 @@
 #include "frontend.hpp"
 
+#include <algorithm>
 #include <raylib.h>
 #include <utility>
+
 #include <yaml-cpp/yaml.h>
 
 #include "ev_loop.hpp"
@@ -14,7 +16,7 @@ namespace bh {
 frontend::frontend(node& node, cluster_transport& transport)
     : node_(node)
     , transport_(transport)
-    , screen_size_(800.0_r, 450.0_r)
+    , screen_size_(900.0_r, 500.0_r)
     , scale_factor_(10.0_r)
 {
 }
@@ -88,6 +90,21 @@ void frontend::draw()
 
     DrawText(TextFormat("%i frames per second", GetFPS()), 0, 0, 20, WHITE);
     DrawText(TextFormat("%i percent done", (int)done_persent_), 0, 25, 20, WHITE);
+
+    if (!energy_vec_.empty()) {
+        real max = *std::max_element(energy_vec_.begin(), energy_vec_.end());
+        real min = *std::min_element(energy_vec_.begin(), energy_vec_.end());
+
+        DrawText(TextFormat("%02.02f", max), screen_size_[0] - 20 * 4, 0, 20, RED);
+        DrawText(TextFormat("%02.02f", min), screen_size_[0] - 20 * 4, screen_size_[1] - 20, 20, RED);
+
+        for (size_t i = 0; i < energy_vec_.size(); ++i) {
+            DrawPixel(
+                (float)i / energy_vec_.size() * screen_size_[0],
+                screen_size_[1] - (energy_vec_[i] - min) / (max - min) * screen_size_[1],
+                RED);
+        }
+    }
 
     for (point_t& point : points_) {
         vec2 position = space_to_screen(point.position);
