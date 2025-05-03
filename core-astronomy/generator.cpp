@@ -24,32 +24,17 @@ array<point_t> generator::generate()
     real speed_scale_factor = 1.0_r / params_.scale_factor;
     real mass               = 1.0_r / params_.count;
 
+    // I dont know what this code does
     for (u32 body = 0; body < params_.count; ++body) {
         real enclosed_mass    = enclosed_mass_dist(rand_engine);
         real enclosing_radius = 1.0_r / std::sqrt(std::pow(enclosed_mass, -2.0_r / 3.0_r) - 1.0_r);
 
-        vec2 position;
-        do {
-            for (u32 i = 0; i < 2; i++) {
-                position[i] = position_distribution(rand_engine);
-            }
-        } while (position.len() > 1.0);
-        position = position * (enclosing_radius * params_.scale_factor / position.len());
+        vec2 position { position_distribution(rand_engine), position_distribution(rand_engine) };
+        position = position.norm() * enclosing_radius * params_.scale_factor;
 
-        real x, y;
-        do {
-            x = uniform_distribution(rand_engine);
-            y = uniform_distribution(rand_engine) / 10.0_r;
-        } while (y > x * x * std::pow(1.0_r - x * x, 3.5_r));
-        real speed_scale = x * std::sqrt(2.0_r / std::sqrt(1.0_r + enclosing_radius * enclosing_radius));
-
-        vec2 velocity;
-        do {
-            for (u32 i = 0; i < 2; i++) {
-                velocity[i] = position_distribution(rand_engine);
-            }
-        } while (velocity.len() > 1.0);
-        velocity = velocity * (speed_scale_factor * speed_scale / velocity.len());
+        real speed_scale = 0.16 * std::sqrt(2.0_r / std::sqrt(1.0_r + enclosing_radius * enclosing_radius));
+        vec2 velocity { -position[1], position[0] };
+        velocity = velocity.norm() * speed_scale_factor * speed_scale;
 
         point_t point { .position = position, .velocity = velocity, .mass = mass };
 

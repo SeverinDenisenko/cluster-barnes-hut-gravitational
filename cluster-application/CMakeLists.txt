@@ -1,6 +1,6 @@
 add_executable(cluster-application main.cpp master.cpp slave.cpp frontend.cpp)
 
-target_link_libraries(cluster-application PRIVATE core-astronomy core-threading cluster-networking raylib)
+target_link_libraries(cluster-application PRIVATE core-astronomy core-async cluster-networking raylib)
 
 if (APPLE)
     target_link_libraries(cluster-application PRIVATE "-framework IOKit")

@@ -36,6 +36,7 @@ private:
     u32 frontend_refresh_every_;
     real done_persent_;
     array<real> energy_vec_;
+    bool draw_energy_;
 };
 
 }

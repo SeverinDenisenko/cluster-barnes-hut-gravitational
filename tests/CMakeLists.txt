@@ -4,7 +4,7 @@ add_executable(ev-loop-test ev_loop_test.cpp)
 
 target_link_libraries(quadtree-test PRIVATE core-algorithms gtest)
 target_link_libraries(vector-test PRIVATE core-math core-infrastructure gtest)
-target_link_libraries(ev-loop-test PRIVATE core-threading gtest)
+target_link_libraries(ev-loop-test PRIVATE core-async gtest)
 
 enable_testing()
 

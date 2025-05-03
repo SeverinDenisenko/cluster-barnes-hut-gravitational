@@ -4,17 +4,18 @@ solver:
   # Theta is taken from:
   # A Parallel Tree-SPH Code for Galaxy Formation
   # Cesario Lia, Giovanni Carraro
-  theta: 0.8
+  theta: 0.5
   # Optimal smoothing length is 1.1 * count ** -0.28
-  epsilon: 0.08
+  epsilon: 0.1
 generator:
-  count: 100000
+  count: 10000
   # Parameters of a Plummer model
   # M = -4E = G = 1
   # Aarseth, SJ, Henon, M, & Wielen, R (1974) Astr & Ap, 37, 183.
   scale_factor: 0.589
 frontend:
   enable: true
-  refresh_every: 4
+  refresh_every: 1
+  draw_energy: true
 output:
   enable: true

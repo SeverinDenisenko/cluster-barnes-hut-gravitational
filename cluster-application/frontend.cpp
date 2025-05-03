@@ -27,6 +27,7 @@ void frontend::start()
 
     bool enable_frontend    = config["frontend"]["enable"].as<bool>();
     frontend_refresh_every_ = config["frontend"]["refresh_every"].as<u32>();
+    draw_energy_            = config["frontend"]["draw_energy"].as<bool>();
 
     if (!enable_frontend) {
         LOG_INFO("Frontend disabled. Do not starting frontend.");
@@ -91,17 +92,19 @@ void frontend::draw()
     DrawText(TextFormat("%i frames per second", GetFPS()), 0, 0, 20, WHITE);
     DrawText(TextFormat("%i percent done", (int)done_persent_), 0, 25, 20, WHITE);
 
-    if (!energy_vec_.empty()) {
+    if (draw_energy_ && !energy_vec_.empty()) {
         real max = *std::max_element(energy_vec_.begin(), energy_vec_.end());
         real min = *std::min_element(energy_vec_.begin(), energy_vec_.end());
 
         DrawText(TextFormat("%02.02f", max), screen_size_[0] - 20 * 4, 0, 20, RED);
         DrawText(TextFormat("%02.02f", min), screen_size_[0] - 20 * 4, screen_size_[1] - 20, 20, RED);
 
-        for (size_t i = 0; i < energy_vec_.size(); ++i) {
-            DrawPixel(
+        for (size_t i = 0; i < energy_vec_.size() - 1; ++i) {
+            DrawLine(
                 (float)i / energy_vec_.size() * screen_size_[0],
                 screen_size_[1] - (energy_vec_[i] - min) / (max - min) * screen_size_[1],
+                (float)(i + 1) / energy_vec_.size() * screen_size_[0],
+                screen_size_[1] - (energy_vec_[i + 1] - min) / (max - min) * screen_size_[1],
                 RED);
         }
     }
