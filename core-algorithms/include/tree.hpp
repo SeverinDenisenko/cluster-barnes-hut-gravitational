@@ -169,8 +169,7 @@ private:
     void build_tree()
     {
         axis_aligned_bounding_box whole_aabb = axis_aligned_bounding_box::create(points_.begin(), points_.end());
-        node_id_t root_node_id               = build_impl(whole_aabb, points_.begin(), points_.end(), max_tree_depth);
-        assert(root_node_id == 0);
+        build_impl(whole_aabb, points_.begin(), points_.end(), max_tree_depth);
         node_points_begin_.push_back(points_.size());
     }
 
