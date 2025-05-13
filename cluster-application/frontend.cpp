@@ -90,7 +90,7 @@ void frontend::draw()
     ClearBackground(BLACK);
 
     DrawText(TextFormat("%i frames per second", GetFPS()), 0, 0, 20, WHITE);
-    DrawText(TextFormat("%i percent done", (int)done_persent_), 0, 25, 20, WHITE);
+    DrawText(TextFormat("%02.02f percent done", done_persent_), 0, 25, 20, WHITE);
 
     if (draw_energy_ && !energy_vec_.empty()) {
         real max = *std::max_element(energy_vec_.begin(), energy_vec_.end());

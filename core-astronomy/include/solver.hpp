@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <limits>
 #include <vector>
 
 #include "linalg.hpp"
@@ -15,6 +16,8 @@ struct solver_params {
     real theta;
     // softening parameter
     real epsilon;
+    real accuracy_parameter;
+    bool adaptive_timestep;
 };
 
 class solver {
@@ -57,26 +60,17 @@ public:
         });
     }
 
-    void step()
-    {
-        for (u32 i = 0; i < points_.size(); ++i) {
-            model_body(i);
-        }
-
-        std::swap(points_, points_copy_);
-
-        t_ += params_.dt;
-    }
-
     void step(u32 begin, u32 end)
     {
+        dt_ = calculate_timestap();
+
         for (u32 i = begin; i < end; ++i) {
             model_body(i);
         }
 
         std::swap(points_, points_copy_);
 
-        t_ += params_.dt;
+        t_ += dt_;
     }
 
     bool finished()
@@ -113,6 +107,30 @@ public:
     }
 
 private:
+    real calculate_timestap()
+    {
+        real result = params_.dt;
+
+        if (!params_.adaptive_timestep) {
+            return result;
+        }
+
+        for (u32 i = 0; i < points_.size(); ++i) {
+            for (u32 j = 0; j < points_.size(); ++j) {
+                if (i == j) {
+                    continue;
+                }
+
+                real dt = (points_[i].position - points_[j].position).len()
+                    / (points_[i].velocity - points_[j].velocity).len();
+
+                result = std::min(result, dt);
+            }
+        }
+
+        return result * params_.accuracy_parameter;
+    }
+
     void model_body(u32 i)
     {
         vec2 acceleration { 0.0_r, 0.0_r };
@@ -135,7 +153,7 @@ private:
                     < params_.theta;
             });
 
-        points_copy_[i] = integrator_step(current, acceleration, params_.dt);
+        points_copy_[i] = integrator_step(current, acceleration, dt_);
     }
 
     array<point_t>& points_;
@@ -143,6 +161,7 @@ private:
     solver_params params_;
     quadree tree_;
     real t_;
+    real dt_;
 };
 
 }

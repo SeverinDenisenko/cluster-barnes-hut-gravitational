@@ -45,6 +45,7 @@ void master_node::setup()
 
     enable_frontend_          = config["frontend"]["enable"].as<bool>();
     frontend_refresh_every_   = config["frontend"]["refresh_every"].as<u32>();
+    draw_energy_              = config["frontend"]["draw_energy"].as<bool>();
     frontend_refresh_counter_ = 0;
 
     enable_output_ = config["output"]["enable"].as<bool>();
@@ -52,10 +53,12 @@ void master_node::setup()
     generator_params generator_params { .count        = config["generator"]["count"].as<u32>(),
                                         .scale_factor = config["generator"]["scale_factor"].as<real>() };
 
-    solver_params_ = solver_params { .t       = config["solver"]["t"].as<real>(),
-                                     .dt      = config["solver"]["dt"].as<real>(),
-                                     .theta   = config["solver"]["theta"].as<real>(),
-                                     .epsilon = config["solver"]["epsilon"].as<real>() };
+    solver_params_ = solver_params { .t                  = config["solver"]["t"].as<real>(),
+                                     .dt                 = config["solver"]["dt"].as<real>(),
+                                     .theta              = config["solver"]["theta"].as<real>(),
+                                     .epsilon            = config["solver"]["epsilon"].as<real>(),
+                                     .accuracy_parameter = config["solver"]["accuracy_parameter"].as<real>(),
+                                     .adaptive_timestep  = config["solver"]["adaptive_timestep"].as<bool>() };
 
     points_      = generator { generator_params }.generate();
     points_copy_ = points_;
@@ -139,7 +142,7 @@ void master_node::send_to_frontend()
         transport_.send_message<status_message>(
             node_.frontend_node_index(),
             status_message { status { .done_persent = nbody_solver_->time() / solver_params_.t * 100.0_r,
-                                      .energy       = nbody_solver_->total_energy() } });
+                                      .energy       = draw_energy_ ? nbody_solver_->total_energy() : 0.0_r } });
     }
 }
 

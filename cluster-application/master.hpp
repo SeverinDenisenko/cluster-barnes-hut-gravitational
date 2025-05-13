@@ -48,6 +48,7 @@ private:
     std::unique_ptr<solver> nbody_solver_;
     u32 frontend_refresh_every_;
     u32 frontend_refresh_counter_;
+    bool draw_energy_;
 };
 
 }
