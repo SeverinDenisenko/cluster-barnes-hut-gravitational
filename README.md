@@ -2,6 +2,8 @@
 
 Solver for gravitational n-body problem using parallel distributed Barnes-Hut algorithm
 
+![pic](pic.png)
+
 # Build
 
 For Ubuntu install packages:
